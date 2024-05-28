@@ -15,5 +15,7 @@
  echo
  type Tipos_Medio_Pago
  echo
+ type Medios_De_pago
+ echo
  type Estados_Envios
 ) > script.sql

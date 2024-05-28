@@ -21,10 +21,10 @@
 - [ ]  Categorias (FRAN)
 - [ ]  Subcategorias (necesita categorias antes) (FRAN)
 - [ ]  SubcategoriaPorProducto (necesita subcategoria y productos antes) (FRAN)
-- [ ]  Estados_envios (LUCAS)
+- [x]  Estados_envios (LUCAS)
 - [ ]  Envios (necesita Tickets_Venta, Estados_envios y Clientes antes) (ELIO)
 - [x]  Tipos_Medio_Pago (LUCAS)
-- [ ]  Medios_De_Pago (necesita Tipos_Medio_Pago antes) (LUCAS)
+- [x]  Medios_De_Pago (necesita Tipos_Medio_Pago antes) (LUCAS)
 - [ ]  Pagos_Venta (necesita Medios_De_Pago, Detalles_pagos y Tickets_Venta antes)
 - [x]  Descuentos (LUCAS)
 
