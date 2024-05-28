@@ -26,5 +26,5 @@
 - [ ]  Tipos_Medio_Pago (LUCAS)
 - [ ]  Medios_De_Pago (necesita Tipos_Medio_Pago antes) (LUCAS)
 - [ ]  Pagos_Venta (necesita Medios_De_Pago, Detalles_pagos y Tickets_Venta antes)
-- [ ]  Descuentos (LUCAS)
+- [x]  Descuentos (LUCAS)
 

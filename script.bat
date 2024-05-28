@@ -8,4 +8,6 @@
  type Clientes.sql  
  echo.
  type Empleados.sql  
+ echo.
+ type Descuentos.sql  
 ) > script.sql
