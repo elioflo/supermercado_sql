@@ -33,7 +33,7 @@ select
 	dato.PRODUCTO_SUB_CATEGORIA,
 	categoria.categoria_id
 from gd_esquema.Maestra dato
-left join LOS_REZAGADOS.Categorias categoria on localidad.localidad_descripcion = dato.CLIENTE_LOCALIDAD
-where dato.CLIENTE_DNI IS NOT NULL;
+left join LOS_REZAGADOS.Categorias categoria on categoria.categoria_descripcion = dato.PRODUCTO_CATEGORIA
+where dato.PRODUCTO_SUB_CATEGORIA IS NOT NULL;
 
 -- Subcategorias - END
