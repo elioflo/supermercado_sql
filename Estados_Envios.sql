@@ -10,7 +10,7 @@ GO
 
 -- SE CREA LA TABLA
 
-CREATE TABLE Estados_Envios(
+CREATE TABLE [LOS_REZAGADOS].[Estados_Envios](
 	[tipo_id] INT IDENTITY(1,1) PRIMARY KEY,
 	[estado_descripcion] NVARCHAR(255) NULL
 ) ON [PRIMARY]
@@ -18,7 +18,7 @@ GO
 
 -- SE MIGRAN LOS DATOS
 
-INSERT INTO [Estados_Envios]([estado_descripcion])
+INSERT INTO [LOS_REZAGADOS].[Estados_Envios] ([estado_descripcion])
 SELECT DISTINCT
 	dato.[ENVIO_ESTADO]
 FROM [gd_esquema].[Maestra] dato

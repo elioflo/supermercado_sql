@@ -10,7 +10,7 @@ GO
 
 -- SE CREA LA TABLA
 
-CREATE TABLE Tipos_Medio_Pago(
+CREATE TABLE [LOS_REZAGADOS].[Tipos_Medio_Pago](
 	[tipo_id] INT IDENTITY(1,1) PRIMARY KEY,
 	[tipo_descripcion] NVARCHAR(255) NULL
 ) ON [PRIMARY]
@@ -18,7 +18,7 @@ GO
 
 -- SE MIGRAN LOS DATOS
 
-INSERT INTO [Tipos_Medio_Pago]([tipo_descripcion])
+INSERT INTO [LOS_REZAGADOS].[Tipos_Medio_Pago]([tipo_descripcion])
 SELECT DISTINCT
 	dato.[PAGO_TIPO_MEDIO_PAGO]
 FROM [gd_esquema].[Maestra] dato

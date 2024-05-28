@@ -10,7 +10,7 @@ GO
 
 -- SE CREA LA TABLA
 
-CREATE TABLE [Descuentos](
+CREATE TABLE [LOS_REZAGADOS].[Descuentos](
 	[descuento_id] INT IDENTITY(1,1) PRIMARY KEY,
 	[descuento_codigo] DECIMAL(18,0) NULL,
     [descuento_descripcion] NVARCHAR(255) NULL,
@@ -23,7 +23,7 @@ GO
 
 -- SE MIGRAN LOS DATOS
 
-INSERT INTO [Descuentos] ([descuento_codigo],[descuento_descripcion],[descuento_fecha_inicio],[descuento_fecha_fin],[descuento_porcentaje],[descuento_tope])
+INSERT INTO [LOS_REZAGADOS].[Descuentos] ([descuento_codigo],[descuento_descripcion],[descuento_fecha_inicio],[descuento_fecha_fin],[descuento_porcentaje],[descuento_tope])
 SELECT 
 	dato.[DESCUENTO_CODIGO],
 	dato.[DESCUENTO_DESCRIPCION],

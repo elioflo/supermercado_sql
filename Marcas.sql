@@ -10,7 +10,7 @@ GO
 
 -- SE CREA LA TABLA
 
-CREATE TABLE [Marcas](
+CREATE TABLE [LOS_REZAGADOS].[Marcas](
 	[marca_id] INT IDENTITY(1,1) PRIMARY KEY,
 	[marca_descripcion] NVARCHAR(255) NULL
 ) ON [PRIMARY]
@@ -18,10 +18,11 @@ GO
 
 -- SE MIGRAN LOS DATOS
 
-INSERT INTO [Marcas]([marca_descripcion])
-SELECT 
+INSERT INTO [LOS_REZAGADOS].[Marcas] ([marca_descripcion])
+SELECT DISTINCT
 	dato.[PRODUCTO_MARCA]
 FROM [gd_esquema].[Maestra] dato
+WHERE PRODUCTO_MARCA IS NOT NULL
 GO
 
 -- Marcas - END

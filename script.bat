@@ -13,6 +13,8 @@
  echo.
  type Marcas.sql  
  echo
+ type Productos.sql
+ echo
  type Tipos_Medio_Pago
  echo
  type Medios_De_pago
