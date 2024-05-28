@@ -1,4 +1,4 @@
--- CLIENTES - BEGIN
+-- SubcategoriasXProducto - BEGIN
 USE [GD1C2024]
 GO
 
@@ -10,26 +10,23 @@ GO
 
 -- SE CREA LA TABLA
 
-CREATE TABLE [LOS_REZAGADOS].[Clientes](
-	[cliente_id] DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
-	[cliente_nombre] [NVARCHAR](255) NULL,
-    [cliente_apellido] [NVARCHAR](255) NULL,
-    [cliente_dni] DECIMAL(18,0) NULL,
-    [cliente_fecha_registro] DATETIME NULL,
-    [cliente_telefono] DECIMAL(18,0) NULL,
-    [cliente_mail] [NVARCHAR](255) NULL,
-    [cliente_fecha_nacimiento] DATETIME NULL,
-    [cliente_domicilio] [NVARCHAR](255) NULL,
-    [cliente_localidad] INT,
+CREATE TABLE [LOS_REZAGADOS].[SubcategoriasXProducto](
+	[subcategoria_id] INT IDENTITY(1,1) PRIMARY KEY,
+    [producto_id] INT IDENTITY(1,1) PRIMARY KEY
 ) ON [PRIMARY]
 GO
 
--- DEFINIMOS PROVINCIA_ID COMO FK
+-- DEFINIMOS SUBCATEGORIA_ID COMO FK y PRODUCTO_ID COMO FK
 
-ALTER TABLE [LOS_REZAGADOS].[Clientes]
-ADD CONSTRAINT FK_Clientes_Localidades
-FOREIGN KEY (cliente_localidad)
-REFERENCES [LOS_REZAGADOS].[Localidades] (localidad_id);
+ALTER TABLE [LOS_REZAGADOS].[SubcategoriasXProducto]
+ADD CONSTRAINT FK_SubcategoriasXProducto_Subcategorias
+FOREIGN KEY (subcategoria_id)
+REFERENCES [LOS_REZAGADOS].[Subcategorias] (subcategoria_id);
+
+ALTER TABLE [LOS_REZAGADOS].[SubcategoriasXProducto]
+ADD CONSTRAINT FK_SubcategoriasXProducto_Productos
+FOREIGN KEY (producto_id)
+REFERENCES [LOS_REZAGADOS].[Productos] (producto_id);
 GO
 
 -- SE MIGRAN LOS DATOS
@@ -49,4 +46,4 @@ from gd_esquema.Maestra dato
 left join LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.CLIENTE_LOCALIDAD
 where dato.CLIENTE_DNI IS NOT NULL;
 
--- CLIENTES - END
+-- SubcategoriasXProducto - END
