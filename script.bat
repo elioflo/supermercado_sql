@@ -12,4 +12,8 @@
  type Descuentos.sql  
  echo.
  type Marcas.sql  
+ echo
+ type Tipos_Medio_Pago
+ echo
+ type Estados_Envios
 ) > script.sql
