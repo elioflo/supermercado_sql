@@ -3,13 +3,13 @@
 - [x]  Provincias
 - [x]  Localidades (necesita provincia antes)
 - [x]  Clientes (necesita localidad antes)
-- [ ]  Detalles_pagos (necesita cliente antes) (JUAN)
+- [x]  Detalles_pagos (necesita cliente antes) (JUAN)
 - [ ]  Supermercado (necesita localidades antes) (FRAN)
 - [ ]  Sucursales (necesita supermercado y localidades antes) (FRAN)
 - [ ]  Cajas (necesita sucursal antes) (FRAN)
-- [ ]  Tipos_comprobantes (JUAN)
-- [ ]  Promocion (JUAN)
-- [ ]  Reglas (JUAN)
+- [x]  Tipos_comprobantes (JUAN)
+- [x]  Promocion (JUAN)
+- [x]  Reglas (JUAN)
 - [ ]  PromocionPorRegla (necesita Promocion y Reglas antes) (JUAN)
 - [x]  Empleados
 - [ ]  Tickets_Venta (necesita cajas, empleado y tipos_comprobante antes) (ELIO)
