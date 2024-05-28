@@ -35,7 +35,8 @@ select
 	dato.CAJA_TIPO,
 	sucursal.sucursal_id
 from gd_esquema.Maestra dato
-left join LOS_REZAGADOS.Sucursales sucursal on localidad.localidad_descripcion = dato.CLIENTE_LOCALIDAD
-where dato.CLIENTE_DNI IS NOT NULL;
+left join LOS_REZAGADOS.Sucursales sucursal on sucursal.localidad_descripcion = dato.CLIENTE_LOCALIDAD
+where dato.CAJA_NUMERO IS NOT NULL
+	AND dato.CAJA_TIPO IS NOT NULL;
 
 -- Cajas - END

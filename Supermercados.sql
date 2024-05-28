@@ -44,7 +44,12 @@ select
 	dato.SUPER_CONDICION_FISCAL,
 	localidad.localidad_id
 from gd_esquema.Maestra dato
-left join LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.CLIENTE_LOCALIDAD
-where dato.CLIENTE_DNI IS NOT NULL;
+left join LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.SUPER_LOCALIDAD
+where dato.SUPER_NOMBRE IS NOT NULL
+	AND dato.SUPER_CUIT IS NOT NULL
+	AND dato.SUPER_RAZON_SOC IS NOT NULL
+	AND dato.SUPER_IIBB IS NOT NULL
+	AND dato.SUPER_CUIT IS NOT NULL
+	AND dato.SUPER_DOMICILIO IS NOT NULL;
 
 -- Supermercados - END

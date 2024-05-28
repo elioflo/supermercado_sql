@@ -36,13 +36,15 @@ GO
 
 INSERT INTO [LOS_REZAGADOS].[Sucursales] ([sucursal_nombre],[sucursal_localidad],[sucursal_direccion],[supermercado_id])
 select 
-	dato.SUCURSAL_NOMBRE_NOMBRE,
+	dato.SUCURSAL_NOMBRE,
 	localidad.localidad_id,
 	dato.SUCURSAL_DIRECCION,
 	supermercado.supermercado_id,
 	
 from gd_esquema.Maestra dato
-left join LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.CLIENTE_LOCALIDAD
-where dato.CLIENTE_DNI IS NOT NULL;
+left join LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.SUCURSAL_LOCALIDAD
+left join LOS_REZAGADOS.Supermercados supermercado on supermercado.supermmercado_descripcion = dato.SUCURSAL_DIRECCION
+where dato.SUCURSAL_NOMBRE IS NOT NULL
+	AND dato.SUCURSAL_DIRECCION IS NOT NULL;
 
 -- Sucursales - END
