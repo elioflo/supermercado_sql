@@ -22,7 +22,7 @@ GO
 ALTER TABLE [LOS_REZAGADOS].[Productos]
 ADD CONSTRAINT FK_Producto_Marca
 FOREIGN KEY (producto_marca)
-REFERENCES [Marcas] (marca_id);
+REFERENCES [LOS_REZAGADOS].[Marcas] (marca_id);
 GO
 
 -- SE MIGRAN LOS DATOS
