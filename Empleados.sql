@@ -25,13 +25,16 @@ GO
 
 -- SE MIGRAN LOS DATOS
 
-INSERT INTO [LOS_REZAGADOS].[Empleados] ([empleado_nombre],[empleado_apellido],[empleado_dni],[empleado_fecha_registro],[empleado_telefono],[empleado_mail],[empleado_fecha_nacimiento])
-SELECT DISTINCT(PROVINCIA) FROM (
-	SELECT SUPER_PROVINCIA AS PROVINCIA FROM gd_esquema.Maestra
-	UNION
-	SELECT SUCURSAL_PROVINCIA AS PROVINCIA FROM gd_esquema.Maestra
-	UNION
-	SELECT CLIENTE_PROVINCIA AS PROVINCIA FROM gd_esquema.Maestra
-) AS PROVINCIAS;
+-- INSERT INTO [LOS_REZAGADOS].[Empleados] ([empleado_nombre],[empleado_apellido],[empleado_dni],[empleado_fecha_registro],[empleado_telefono],[empleado_mail],[empleado_fecha_nacimiento])
+-- select distinct
+-- 	dato.EMPLEADO_NOMBRE,
+-- 	dato.EMPLEADO_APELLIDO,
+-- 	dato.EMPLEADO_DNI,
+-- 	dato.EMPLEADO_FECHA_REGISTRO,
+-- 	dato.EMPLEADO_TELEFONO,
+-- 	dato.EMPLEADO_MAIL,
+-- 	dato.EMPLEADO_FECHA_NACIMIENTO
+-- from gd_esquema.Maestra dato
+-- where dato.EMPLEADO_DNI is not null;
 
 -- EMPLEADOS - END
