@@ -1,0 +1,28 @@
+-- Tipos_Medio_Pago - BEGIN
+USE [GD1C2024]
+GO
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+-- SE CREA LA TABLA
+
+CREATE TABLE Tipos_Medio_Pago(
+	[tipo_id] INT IDENTITY(1,1) PRIMARY KEY,
+	[tipo_descripcion] NVARCHAR(255) NULL
+) ON [PRIMARY]
+GO
+
+-- SE MIGRAN LOS DATOS
+
+INSERT INTO [Tipos_Medio_Pago]([tipo_descripcion])
+SELECT DISTINCT
+	dato.[PAGO_TIPO_MEDIO_PAGO]
+FROM [gd_esquema].[Maestra] dato
+WHERE PAGO_MEDIO_PAGO IS NOT NULL
+GO
+
+-- Tipos_Medio_Pago - END
