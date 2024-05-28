@@ -10,4 +10,6 @@
  type Empleados.sql  
  echo.
  type Descuentos.sql  
+ echo.
+ type Marcas.sql  
 ) > script.sql

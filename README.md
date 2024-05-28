@@ -13,7 +13,7 @@
 - [ ]  PromocionPorRegla (necesita Promocion y Reglas antes) (JUAN)
 - [x]  Empleados
 - [ ]  Tickets_Venta (necesita cajas, empleado y tipos_comprobante antes) (ELIO)
-- [ ]  Marcas (LUCAS)
+- [x]  Marcas (LUCAS)
 - [ ]  Productos (necesita marcas antes) (aclaracion subcategoria_id no deberia estar en productos) (LUCAS)
 - [ ]  PromocionPorProductos (necesita Promocion y Productos antes) (JUAN)
 - [ ]  Ticket_VentaPorProducto (necesita Tickets_Venta y productos antes) (ELIO)

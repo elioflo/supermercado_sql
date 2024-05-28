@@ -17,7 +17,7 @@ CREATE TABLE [Descuentos](
     [descuento_fecha_inicio] DATETIME NULL,
     [descuento_fecha_fin] DATETIME NULL,
     [descuento_porcentaje] DECIMAL(18,2) NULL,
-    [descuento_tope] DECIMAL(18,2) NULL,
+    [descuento_tope] DECIMAL(18,2) NULL
 ) ON [PRIMARY]
 GO
 
