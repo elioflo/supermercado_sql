@@ -11,15 +11,15 @@ GO
 -- SE CREA LA TABLA
 
 CREATE TABLE [LOS_REZAGADOS].[Clientes](
-	[cliente_id] INT IDENTITY(1,1) PRIMARY KEY,
-	[cliente_nombre] [nvarchar](255) NULL,
-    [cliente_apellido] [nvarchar](255) NULL,
-    [cliente_dni] decimal(18,0) NULL,
-    [cliente_fecha_registro] datetime NULL,
-    [cliente_telefono] decimal(18,0) NULL,
-    [cliente_mail] [nvarchar](255) NULL,
-    [cliente_fecha_nacimiento] datetime NULL,
-    [cliente_domicilio] [nvarchar](255) NULL,
+	[cliente_id] DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
+	[cliente_nombre] [NVARCHAR](255) NULL,
+    [cliente_apellido] [NVARCHAR](255) NULL,
+    [cliente_dni] DECIMAL(18,0) NULL,
+    [cliente_fecha_registro] DATETIME NULL,
+    [cliente_telefono] DECIMAL(18,0) NULL,
+    [cliente_mail] [NVARCHAR](255) NULL,
+    [cliente_fecha_nacimiento] DATETIME NULL,
+    [cliente_domicilio] [NVARCHAR](255) NULL,
     [cliente_localidad] INT,
 ) ON [PRIMARY]
 GO
