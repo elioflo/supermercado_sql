@@ -146,13 +146,14 @@ CREATE TABLE [LOS_REZAGADOS].[Provincias] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Tipos_comprobantes')
 CREATE TABLE [LOS_REZAGADOS].[Tipos_comprobantes] (
-  tipos_comprobante_id DECIMAL (18, 0) PRIMARY KEY,
+  tipo_comprobante_id DECIMAL (18, 0) PRIMARY KEY,
   tipos_comprobantes_descripcion NVARCHAR(255),
 )
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Tickets_Venta')
 CREATE TABLE [LOS_REZAGADOS].[Tickets_Venta] (
-  ticket_numero DECIMAL (18, 0) PRIMARY KEY,
+  ticket_id DECIMAL (18, 0) PRIMARY KEY,
+  ticket_numero DECIMAL (18, 0), 
   ticket_fecha_hora DATETIME,
   caja DECIMAL(18, 0), -- FK
   empleado DECIMAL(18, 0), -- FK
@@ -172,7 +173,7 @@ CREATE TABLE [LOS_REZAGADOS].[Estados_envios] (
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Envios')
 CREATE TABLE [LOS_REZAGADOS].[Envios] (
   envio_id DECIMAL (18, 0) PRIMARY KEY,
-  ticket_numero DECIMAL (18, 0), -- FK
+  ticket_id DECIMAL (18, 0), -- FK
   estado DECIMAL (18, 0), -- FK
   cliente DECIMAL (18, 0), -- FK
   envio_fecha_programada DATETIME,
@@ -186,7 +187,7 @@ IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Pagos_Ventas')
 CREATE TABLE [LOS_REZAGADOS].[Pagos_Ventas] (
   nro_pago DECIMAL (18, 0) PRIMARY KEY,
   pago_fecha_hora DATETIME,
-  ticket_numero DECIMAL (18, 0), -- FK
+  ticket_id DECIMAL (18, 0), -- FK
   detalle DECIMAL (18, 0), -- FK
   medio_de_pago DECIMAL (18, 0), -- FK
   cod_descuento DECIMAL (18, 0), -- FK
@@ -206,7 +207,7 @@ IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Medios_de_pago')
 CREATE TABLE [LOS_REZAGADOS].[Medios_de_pago] (
   medio_de_pago_id DECIMAL(18, 0) PRIMARY KEY,
   descripcion NVARCHAR(255),
-  tipo_medio_pago DECIMAL(18, 0), -- FK
+  tipo_id DECIMAL(18, 0), -- FK
 )
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Tipos_medio_pago')
@@ -252,25 +253,27 @@ CREATE TABLE [LOS_REZAGADOS].[Marcas] (
   marca_descripcion NVARCHAR(255),
 )
 
-IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Ticket_venta_x_producto')
-CREATE TABLE [LOS_REZAGADOS].[Ticket_venta_x_producto] (
-  ticket_numero DECIMAL(18, 0),
-  producto DECIMAL(18,0),
-  ticket_det_cantidad DECIMAL (18, 0),
-  ticket_det_precio DECIMAL (18, 2),
-  ticket_det_total DECIMAL (18, 2),
-  promo_aplicada_descuento DECIMAL (18, 2),
-  PRIMARY KEY (ticket_numero, producto)
-)
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Productos')
 CREATE TABLE [LOS_REZAGADOS].[Productos] (
   producto_id DECIMAL(18, 0) PRIMARY KEY,
   producto_precio_unitario DECIMAL (18, 2),
-  subcategoria DECIMAL (18, 0), -- FK
   marca DECIMAL (18, 0), -- FK
   producto_descripcion NVARCHAR(255),
   producto_nombre NVARCHAR(255),
+)
+
+IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Ticket_venta_x_producto')
+CREATE TABLE [LOS_REZAGADOS].[Ticket_venta_x_producto] (
+  ticket_id DECIMAL(18, 0),
+  producto DECIMAL(18,0),
+  ticket_det_cantidad DECIMAL (18, 0),
+  ticket_det_precio DECIMAL (18, 2),
+  ticket_det_total DECIMAL (18, 2),
+  promo_aplicada_descuento DECIMAL (18, 2),
+  PRIMARY KEY(ticket_id, producto),
+  FOREIGN KEY(ticket_id) REFERENCES [LOS_REZAGADOS].[Tickets_venta],
+  FOREIGN KEY(producto) REFERENCES [LOS_REZAGADOS].[Productos],
 )
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Reglas')
@@ -285,34 +288,37 @@ CREATE TABLE [LOS_REZAGADOS].[Reglas] (
   regla_aplica_mismo_prod DECIMAL (18, 0),
 )
 
-IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promocion_x_venta')
-CREATE TABLE [LOS_REZAGADOS].[Promocion_x_venta] (
-  promocion_codigo DECIMAL(18, 0),
-  ticket_numero DECIMAL (18, 0),
-  producto DECIMAL (18, 2),
-  PRIMARY KEY (cod_promocion, ticket_numero, producto)
-)
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promocion')
 CREATE TABLE [LOS_REZAGADOS].[Promocion] (
-  promocion_codigo DECIMAL(18, 0) PRIMARY KEY,
+  cod_promocion DECIMAL(18, 0) PRIMARY KEY,
   promocion_descripcion NVARCHAR(255),
   promocion_fecha_inicio DATETIME,
   promocion_fecha_fin DATETIME,
 )
 
+IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promocion_x_venta')
+CREATE TABLE [LOS_REZAGADOS].[Promocion_x_venta] (
+  cod_promocion DECIMAL(18, 0),
+  ticket_id DECIMAL (18, 0),
+  producto DECIMAL (18,0),
+  PRIMARY KEY(cod_promocion, ticket_id, producto),
+  FOREIGN KEY(ticket_id, producto) REFERENCES [LOS_REZAGADOS].[Ticket_venta_x_producto],
+  FOREIGN KEY(cod_promocion) REFERENCES [LOS_REZAGADOS].[Promocion],
+)
+
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promocion_x_producto')
 CREATE TABLE [LOS_REZAGADOS].[Promocion_x_producto] (
-  promocion_codigo DECIMAL(18, 0),
+  cod_promocion DECIMAL(18, 0),
   producto DECIMAL (18, 0),
-  PRIMARY KEY (promocion_codigo, producto)
+  PRIMARY KEY (cod_promocion, producto)
 )
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promocion_x_regla')
 CREATE TABLE [LOS_REZAGADOS].[Promocion_x_regla] (
-  promocion_codigo DECIMAL(18, 0),
+  cod_promocion DECIMAL(18, 0),
   regla DECIMAL (18, 0),
-  PRIMARY KEY (promocion_codigo, regla)
+  PRIMARY KEY (cod_promocion, regla)
 )
 
 COMMIT
@@ -347,10 +353,10 @@ ALTER TABLE [LOS_REZAGADOS].[Tickets_Venta]
 ADD FOREIGN KEY (empleado) REFERENCES [LOS_REZAGADOS].Empleados(empleado_id);
 
 ALTER TABLE [LOS_REZAGADOS].[Tickets_Venta]
-ADD FOREIGN KEY (tipo_comprobante) REFERENCES [LOS_REZAGADOS].Tipos_comprobantes(tipo_comprobante_id); -- ??????
+ADD FOREIGN KEY (tipo_comprobante) REFERENCES [LOS_REZAGADOS].Tipos_comprobantes(tipo_comprobante_id);
 
 ALTER TABLE [LOS_REZAGADOS].[Envios]
-ADD FOREIGN KEY (ticket_numero) REFERENCES [LOS_REZAGADOS].Tickets_VentaEmpleados(ticket_numero);
+ADD FOREIGN KEY (ticket_id) REFERENCES [LOS_REZAGADOS].Tickets_Venta(ticket_id);
 
 ALTER TABLE [LOS_REZAGADOS].[Envios]
 ADD FOREIGN KEY (estado) REFERENCES [LOS_REZAGADOS].Estados_envios(estado_id);
@@ -359,7 +365,7 @@ ALTER TABLE [LOS_REZAGADOS].[Envios]
 ADD FOREIGN KEY (cliente) REFERENCES [LOS_REZAGADOS].Clientes(cliente_id);
 
 ALTER TABLE [LOS_REZAGADOS].[Pagos_Ventas]
-ADD FOREIGN KEY (ticket_numero) REFERENCES [LOS_REZAGADOS].Tickets_VentaClientes(ticket_numero);
+ADD FOREIGN KEY (ticket_id) REFERENCES [LOS_REZAGADOS].Tickets_Venta(ticket_id);
 
 ALTER TABLE [LOS_REZAGADOS].[Pagos_Ventas]
 ADD FOREIGN KEY (detalle) REFERENCES [LOS_REZAGADOS].Detalles_pagos(detalle_id);
@@ -385,15 +391,6 @@ ADD FOREIGN KEY (producto_id) REFERENCES [LOS_REZAGADOS].Productos(producto_id);
 ALTER TABLE [LOS_REZAGADOS].[Subcategorias]
 ADD FOREIGN KEY (categoria) REFERENCES [LOS_REZAGADOS].Categorias(categoria_id);
 
-ALTER TABLE [LOS_REZAGADOS].[Ticket_venta_x_producto]
-ADD FOREIGN KEY (ticket_numero) REFERENCES [LOS_REZAGADOS].Tickets_Venta(ticket_numero);
-
-ALTER TABLE [LOS_REZAGADOS].[Ticket_venta_x_producto]
-ADD FOREIGN KEY (producto_id) REFERENCES [LOS_REZAGADOS].Productos(producto_id);
-
-ALTER TABLE [LOS_REZAGADOS].[Productos]
-ADD FOREIGN KEY (subcategoria_id) REFERENCES [LOS_REZAGADOS].Subcategorias_x_producto(subcategoria_id);
-
 ALTER TABLE [LOS_REZAGADOS].[Productos]
 ADD FOREIGN KEY (marca) REFERENCES [LOS_REZAGADOS].Marcas(marca_id);
 
@@ -401,22 +398,16 @@ ALTER TABLE [LOS_REZAGADOS].[Productos]
 ADD FOREIGN KEY (marca) REFERENCES [LOS_REZAGADOS].Marcas(marca_id);
 
 ALTER TABLE [LOS_REZAGADOS].[Promocion_x_producto]
-ADD FOREIGN KEY (promocion_codigo) REFERENCES [LOS_REZAGADOS].Promocion(promocion_codigo);
+ADD FOREIGN KEY (cod_promocion) REFERENCES [LOS_REZAGADOS].Promocion(cod_promocion);
 
 ALTER TABLE [LOS_REZAGADOS].[Promocion_x_producto]
-ADD FOREIGN KEY (producto_id) REFERENCES [LOS_REZAGADOS].Productos(producto_id);
+ADD FOREIGN KEY (producto) REFERENCES [LOS_REZAGADOS].Productos(producto_id);
 
 ALTER TABLE [LOS_REZAGADOS].[Promocion_x_regla]
-ADD FOREIGN KEY (promocion_codigo) REFERENCES [LOS_REZAGADOS].Promocion(promocion_codigo);
+ADD FOREIGN KEY (cod_promocion) REFERENCES [LOS_REZAGADOS].Promocion(cod_promocion);
 
 ALTER TABLE [LOS_REZAGADOS].[Promocion_x_regla]
-ADD FOREIGN KEY (regla_id) REFERENCES [LOS_REZAGADOS].Reglas(regla_id);
-
-ALTER TABLE [LOS_REZAGADOS].[Promocion_x_venta]
-ADD FOREIGN KEY (promocion_codigo) REFERENCES [LOS_REZAGADOS].Promocion(promocion_codigo);
-
-ALTER TABLE [LOS_REZAGADOS].[Promocion_x_venta]
-ADD FOREIGN KEY (ticket_numero, producto) REFERENCES [LOS_REZAGADOS].Tickets_Venta(ticket_numero);
+ADD FOREIGN KEY (regla) REFERENCES [LOS_REZAGADOS].Reglas(regla_id);
 
 COMMIT
 GO
