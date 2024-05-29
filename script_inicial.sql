@@ -457,6 +457,7 @@ where dato.SUPER_NOMBRE IS NOT NULL
 	AND dato.SUPER_CUIT IS NOT NULL
 	AND dato.SUPER_IIBB IS NOT NULL
 	AND dato.SUPER_DOMICILIO IS NOT NULL;
+GO
 
 INSERT INTO [LOS_REZAGADOS].[Sucursales] ([sucursal_nombre],[sucursal_localidad],[sucursal_direccion],[supermercado_id])
 select 
@@ -464,7 +465,6 @@ select
 	localidad.localidad_id,
 	dato.SUCURSAL_DIRECCION,
 	supermercado.supermercado_id,
-	
 from gd_esquema.Maestra dato
 left join LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.SUCURSAL_LOCALIDAD
 left join LOS_REZAGADOS.Supermercados supermercado on supermercado.supermmercado_descripcion = dato.SUCURSAL_DIRECCION
