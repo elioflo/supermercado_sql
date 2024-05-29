@@ -416,7 +416,59 @@ GO
 
 BEGIN TRANSACTION
 
+INSERT INTO [LOS_REZAGADOS].[Tipos_Medio_Pago]([tipo_descripcion])
+SELECT DISTINCT
+	dato.[PAGO_TIPO_MEDIO_PAGO]
+FROM [gd_esquema].[Maestra] dato
+WHERE PAGO_MEDIO_PAGO IS NOT NULL
+GO
 
+INSERT INTO [LOS_REZAGADOS].[Medios_De_Pago] ([descripcion], [tipo_id])
+SELECT
+    dato.[PAGO_MEDIO_PAGO],
+    tmp.tipo_id
+FROM 
+    [gd_esquema].[Maestra] dato
+    INNER JOIN Tipos_Medio_Pago tmp ON dato.[PAGO_TIPO_MEDIO_PAGO] = tmp.tipo_descripcion
+WHERE dato.[PAGO_TIPO_MEDIO_PAGO] IS NOT NULL;
+GO
+
+INSERT INTO [LOS_REZAGADOS].[Estados_Envios] ([estado_descripcion])
+SELECT DISTINCT
+	dato.[ENVIO_ESTADO]
+FROM [gd_esquema].[Maestra] dato
+GO
+
+INSERT INTO [LOS_REZAGADOS].[Descuentos] ([descuento_codigo],[descuento_descripcion],[descuento_fecha_inicio],[descuento_fecha_fin],[descuento_porcentaje],[descuento_tope])
+SELECT 
+	dato.[DESCUENTO_CODIGO],
+	dato.[DESCUENTO_DESCRIPCION],
+	dato.[DESCUENTO_FECHA_INICIO],
+	dato.[DESCUENTO_FECHA_FIN],
+	dato.[DESCUENTO_PORCENTAJE_DESC],
+	dato.[DESCUENTO_TOPE]
+FROM [gd_esquema].[Maestra] dato
+WHERE dato.[DESCUENTO_CODIGO] IS NOT NULL
+GO
+
+INSERT INTO [LOS_REZAGADOS].[Marcas] ([marca_descripcion])
+SELECT DISTINCT
+	dato.[PRODUCTO_MARCA]
+FROM [gd_esquema].[Maestra] dato
+WHERE PRODUCTO_MARCA IS NOT NULL
+GO
+
+INSERT INTO [LOS_REZAGADOS].[Productos] ([producto_precio_unitario], [producto_marca], [producto_descripcion], [producto_nombre])
+SELECT DISTINCT
+    dato.[PRODUCTO_PRECIO],
+    m.marca_id,
+    dato.[PRODUCTO_DESCRIPCION],
+    dato.[PRODUCTO_NOMBRE]
+FROM 
+    [gd_esquema].[Maestra] dato
+    INNER JOIN Marcas m ON dato.[PRODUCTO_MARCA] = m.marca_descripcion
+WHERE dato.[PRODUCTO_NOMBRE] IS NOT NULL;
+GO
 
 COMMIT
 GO
