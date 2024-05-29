@@ -291,7 +291,7 @@ CREATE TABLE [LOS_REZAGADOS].[Reglas] (
   regla_cant_aplica_regla DECIMAL (18, 0),
   regla_cant_aplica_descuento DECIMAL (18, 0),
   regla_cant_max_prod DECIMAL (18, 0),
-  regla_aplica_misma_marca_ DECIMAL (18, 0),
+  regla_aplica_misma_marca DECIMAL (18, 0),
   regla_aplica_mismo_prod DECIMAL (18, 0),
 )
 
@@ -461,7 +461,7 @@ INSERT INTO [LOS_REZAGADOS].[Sucursales] ([sucursal_nombre],[sucursal_localidad]
 SELECT DISTINCT
 	dato.SUCURSAL_NOMBRE,
 	localidad.localidad_id,
-	dato.SUCURSAL_DIRECCION
+	dato.SUCURSAL_DIRECCION,
 	supermercado.supermercado_id
 FROM gd_esquema.Maestra dato
 LEFT JOIN LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.SUCURSAL_LOCALIDAD
@@ -557,7 +557,7 @@ ORDER BY 1
 GO
 
 SET IDENTITY_INSERT [LOS_REZAGADOS].[Promociones] ON;
-INSERT INTO [LOS_REZAGADOS].[Promociones] ([promocion_codigo], [promocion_descripcion], [promocion_fecha_inicio], [promocion_fecha_fin])
+INSERT INTO [LOS_REZAGADOS].[Promociones] ([cod_promocion], [promocion_descripcion], [promocion_fecha_inicio], [promocion_fecha_fin])
 SELECT DISTINCT PROMO_CODIGO, PROMOCION_DESCRIPCION, PROMOCION_FECHA_INICIO, PROMOCION_FECHA_FIN
 FROM gd_esquema.Maestra
 WHERE PROMO_CODIGO IS NOT NULL
@@ -584,7 +584,7 @@ JOIN [LOS_REZAGADOS].[Promociones] P ON dato.PROMOCION_DESCRIPCION = P.promocion
 GROUP BY P.cod_promocion, R.regla_id
 GO;
 
-INSERT INTO [LOS_REZAGADOS].[Promociones_x_producto] ([cod_promocion], [producto_id])
+INSERT INTO [LOS_REZAGADOS].[Promociones_x_producto] ([cod_promocion], [producto])
 SELECT DISTINCT Promo.cod_promocion, Prod.producto_id
 FROM [LOS_REZAGADOS].[Productos] Prod
 JOIN [gd_esquema].[Maestra] dato ON Prod.producto_descripcion = dato.PRODUCTO_DESCRIPCION
