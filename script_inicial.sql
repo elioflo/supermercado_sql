@@ -420,6 +420,65 @@ GO
 
 BEGIN TRANSACTION
 
+INSERT INTO [LOS_REZAGADOS].[Provincias] ([provincia_descripcion])
+SELECT DISTINCT PROVINCIA FROM (
+	SELECT SUPER_PROVINCIA AS PROVINCIA FROM gd_esquema.Maestra
+	UNION
+	SELECT SUCURSAL_PROVINCIA AS PROVINCIA FROM gd_esquema.Maestra
+	UNION
+	SELECT CLIENTE_PROVINCIA AS PROVINCIA FROM gd_esquema.Maestra
+) AS PROVINCIAS
+WHERE PROVINCIA IS NOT NULL;
+
+INSERT INTO [LOS_REZAGADOS].[Localidades] ([localidad_descripcion], [provincia])
+SELECT DISTINCT localidad_descripcion, provincia FROM (
+SELECT
+	dato.SUPER_LOCALIDAD AS localidad_descripcion,
+	tprovincia.provincia_id AS provincia
+FROM gd_esquema.Maestra dato
+INNER JOIN LOS_REZAGADOS.Provincias tprovincia ON tprovincia.provincia_descripcion = dato.SUPER_PROVINCIA
+UNION
+SELECT 
+	dato.SUCURSAL_LOCALIDAD AS localidad_descripcion,
+	tprovincia.provincia_id AS provincia
+FROM gd_esquema.Maestra dato
+INNER JOIN LOS_REZAGADOS.Provincias tprovincia ON tprovincia.provincia_descripcion = dato.SUCURSAL_PROVINCIA
+UNION
+SELECT 
+	dato.CLIENTE_LOCALIDAD AS localidad_descripcion,
+	tprovincia.provincia_id AS provincia
+FROM gd_esquema.Maestra dato
+INNER JOIN LOS_REZAGADOS.Provincias tprovincia ON tprovincia.provincia_descripcion = dato.CLIENTE_PROVINCIA) AS LOCALIDADES;
+GO
+
+INSERT INTO [LOS_REZAGADOS].[Clientes] ([cliente_nombre],[cliente_apellido],[cliente_dni],[cliente_fecha_registro],[cliente_telefono],[cliente_mail],[cliente_fecha_nacimiento],[cliente_domicilio],[cliente_localidad])
+SELECT DISTINCT 
+	dato.CLIENTE_NOMBRE,
+	dato.CLIENTE_APELLIDO,
+	dato.CLIENTE_DNI,
+	dato.CLIENTE_FECHA_REGISTRO,
+	dato.CLIENTE_TELEFONO,
+	dato.CLIENTE_MAIL,
+	dato.CLIENTE_FECHA_NACIMIENTO,
+	dato.CLIENTE_DOMICILIO,
+	localidad.localidad_id
+FROM gd_esquema.Maestra dato
+LEFT JOIN LOS_REZAGADOS.Provincias provincia ON provincia.provincia_descripcion = dato.CLIENTE_PROVINCIA
+LEFT JOIN LOS_REZAGADOS.Localidades localidad ON localidad.localidad_descripcion = dato.CLIENTE_LOCALIDAD AND localidad.provincia = provincia.provincia_id
+WHERE dato.CLIENTE_DNI IS NOT NULL;
+
+INSERT INTO [LOS_REZAGADOS].[Empleados] ([empleado_nombre],[empleado_apellido],[empleado_dni],[empleado_fecha_registro],[empleado_telefono],[empleado_mail],[empleado_fecha_nacimiento])
+SELECT DISTINCT
+	dato.EMPLEADO_NOMBRE,
+	dato.EMPLEADO_APELLIDO,
+	dato.EMPLEADO_DNI,
+	dato.EMPLEADO_FECHA_REGISTRO,
+	dato.EMPLEADO_TELEFONO,
+	dato.EMPLEADO_MAIL,
+	dato.EMPLEADO_FECHA_NACIMIENTO
+FROM gd_esquema.Maestra dato
+WHERE dato.EMPLEADO_DNI IS NOT NULL;
+
 INSERT INTO [LOS_REZAGADOS].[Categorias] ([categoria_descripcion])
 SELECT DISTINCT 
 	dato.PRODUCTO_CATEGORIA
@@ -554,6 +613,46 @@ SELECT DISTINCT TICKET_TIPO_COMPROBANTE
 FROM gd_esquema.Maestra
 WHERE TICKET_TIPO_COMPROBANTE IS NOT NULL
 ORDER BY 1
+GO
+
+INSERT INTO [LOS_REZAGADOS].[Tickets_Venta] 
+([ticket_numero],
+[ticket_fecha_hora],
+[caja],
+[empleado],
+[tipo_comprobante],
+[ticket_sub_total_productos],
+[ticket_total_descuento],
+[ticket_total_descuento_aplicado],
+[ticket_total_ticket])
+SELECT DISTINCT
+	dato.TICKET_NUMERO,
+	dato.TICKET_FECHA_HORA,
+	caja.caja_id,
+	empleado.empleado_id,
+	comprobante.tipo_comprobante_id,
+	dato.TICKET_SUBTOTAL_PRODUCTOS,
+	dato.TICKET_TOTAL_DESCUENTO_APLICADO,
+	dato.TICKET_TOTAL_TICKET
+FROM gd_esquema.Maestra dato
+LEFT JOIN LOS_REZAGADOS.Tipos_comprobantes comprobante ON comprobante.tipos_comprobantes_descripcion = dato.TICKET_TIPO_COMPROBANTE
+LEFT JOIN LOS_REZAGADOS.Empleados empleado 
+	ON empleado.empleado_dni = dato.EMPLEADO_DNI
+LEFT JOIN LOS_REZAGADOS.Supermercados supermercado
+	ON supermercado.supermercado_cuit = dato.SUPER_CUIT
+LEFT JOIN LOS_REZAGADOS.Provincias provincia ON provincia.provincia_descripcion = dato.SUCURSAL_PROVINCIA
+LEFT JOIN LOS_REZAGADOS.Localidades localidad 
+	ON localidad.localidad_descripcion = dato.SUCURSAL_LOCALIDAD
+	AND localidad.provincia = provincia.provincia_id
+LEFT JOIN LOS_REZAGADOS.Sucursales sucursal 
+	ON sucursal.sucursal_nombre = dato.SUCURSAL_NOMBRE
+	AND sucursal.sucursal_direccion = dato.SUCURSAL_DIRECCION
+	AND sucursal.supermercado = supermercado.supermercado_id
+	AND sucursal.sucursal_localidad = localidad.localidad_id
+LEFT JOIN LOS_REZAGADOS.Cajas caja
+	ON caja.caja_numero = dato.CAJA_NUMERO
+	AND caja.caja_tipo = dato.CAJA_TIPO
+	AND caja.sucursal = sucursal.sucursal_id;
 GO
 
 SET IDENTITY_INSERT [LOS_REZAGADOS].[Promociones] ON;
