@@ -423,6 +423,66 @@ GO
 
 BEGIN TRANSACTION
 
+INSERT INTO [LOS_REZAGADOS].[Categorias] ([categoria_descripcion])
+SELECT DISTINCT 
+	dato.PRODUCTO_CATEGORIA
+from gd_esquema.Maestra dato
+where dato.PRODUCTO_CATEGORIA IS NOT NULL;
+GO
+
+INSERT INTO [LOS_REZAGADOS].[Subcategorias] ([subcategoria_descripcion],[categoria_id])
+select 
+	dato.PRODUCTO_SUB_CATEGORIA,
+	categoria.categoria_id
+from gd_esquema.Maestra dato
+left join LOS_REZAGADOS.Categorias categoria on categoria.categoria_descripcion = dato.PRODUCTO_CATEGORIA
+where dato.PRODUCTO_SUB_CATEGORIA IS NOT NULL;
+GO
+
+-- Falta el INSERT de subcategorias_x_producto
+
+INSERT INTO [LOS_REZAGADOS].[Supermercados] ([supermercado_nombre],[supermercado_cuit],[supermercado_razon_social],[supermercado_iibb],[supermercado_domicilio],[supermercado_fecha_inicio_act],[super_condicion_fiscal],[supermercado_localidad])
+select 
+	dato.SUPER_NOMBRE,
+	dato.SUPER_CUIT,
+	dato.SUPER_RAZON_SOC,
+	dato.SUPER_IIBB,
+	dato.SUPER_DOMICILIO,
+	dato.SUPER_FECHA_INI_ACTIVIDAD,
+	dato.SUPER_CONDICION_FISCAL,
+	localidad.localidad_id
+from gd_esquema.Maestra dato
+left join LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.SUPER_LOCALIDAD
+where dato.SUPER_NOMBRE IS NOT NULL
+	AND dato.SUPER_CUIT IS NOT NULL
+	AND dato.SUPER_IIBB IS NOT NULL
+	AND dato.SUPER_DOMICILIO IS NOT NULL;
+
+INSERT INTO [LOS_REZAGADOS].[Sucursales] ([sucursal_nombre],[sucursal_localidad],[sucursal_direccion],[supermercado_id])
+select 
+	dato.SUCURSAL_NOMBRE,
+	localidad.localidad_id,
+	dato.SUCURSAL_DIRECCION,
+	supermercado.supermercado_id,
+	
+from gd_esquema.Maestra dato
+left join LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.SUCURSAL_LOCALIDAD
+left join LOS_REZAGADOS.Supermercados supermercado on supermercado.supermmercado_descripcion = dato.SUCURSAL_DIRECCION
+where dato.SUCURSAL_NOMBRE IS NOT NULL
+	AND dato.SUCURSAL_DIRECCION IS NOT NULL;
+GO
+
+INSERT INTO [LOS_REZAGADOS].[Cajas] ([caja_numero],[caja_tipo],[sucursal_id])
+select 
+	dato.CAJA_NUMERO,
+	dato.CAJA_TIPO,
+	sucursal.sucursal_id
+from gd_esquema.Maestra dato
+left join LOS_REZAGADOS.Sucursales sucursal on sucursal.localidad_descripcion = dato.CLIENTE_LOCALIDAD --Aca no se como buscar la sucursal_id
+where dato.CAJA_NUMERO IS NOT NULL
+	AND dato.CAJA_TIPO IS NOT NULL;
+GO
+
 INSERT INTO [LOS_REZAGADOS].[Tipos_Medio_Pago]([tipo_descripcion])
 SELECT DISTINCT
 	dato.[PAGO_TIPO_MEDIO_PAGO]

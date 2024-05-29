@@ -31,19 +31,6 @@ GO
 
 -- SE MIGRAN LOS DATOS
 
-INSERT INTO [LOS_REZAGADOS].[Clientes] ([cliente_nombre],[cliente_apellido],[cliente_dni],[cliente_fecha_registro],[cliente_telefono],[cliente_mail],[cliente_fecha_nacimiento],[cliente_domicilio],[cliente_localidad])
-select 
-	dato.CLIENTE_NOMBRE,
-	dato.CLIENTE_APELLIDO,
-	dato.CLIENTE_DNI,
-	dato.CLIENTE_FECHA_REGISTRO,
-	dato.CLIENTE_TELEFONO,
-	dato.CLIENTE_MAIL,
-	dato.CLIENTE_FECHA_NACIMIENTO,
-	dato.CLIENTE_DOMICILIO,
-	localidad.localidad_id
-from gd_esquema.Maestra dato
-left join LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.CLIENTE_LOCALIDAD
-where dato.CLIENTE_DNI IS NOT NULL;
+-- TODO
 
 -- SubcategoriasXProducto - END
