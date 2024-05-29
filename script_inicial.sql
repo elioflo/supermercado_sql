@@ -70,14 +70,14 @@ IF OBJECT_ID('LOS_REZAGADOS.Productos','U') IS NOT NULL
   DROP TABLE [LOS_REZAGADOS].Productos;
 IF OBJECT_ID('LOS_REZAGADOS.Reglas','U') IS NOT NULL
   DROP TABLE [LOS_REZAGADOS].Reglas;
-IF OBJECT_ID('LOS_REZAGADOS.Promocion_x_venta','U') IS NOT NULL
-  DROP TABLE [LOS_REZAGADOS].Promocion_x_venta;
-IF OBJECT_ID('LOS_REZAGADOS.Promocion','U') IS NOT NULL
-  DROP TABLE [LOS_REZAGADOS].Promocion;
-IF OBJECT_ID('LOS_REZAGADOS.Promocion_x_producto','U') IS NOT NULL
-  DROP TABLE [LOS_REZAGADOS].Promocion_x_producto;
-IF OBJECT_ID('LOS_REZAGADOS.Promocion_x_regla','U') IS NOT NULL
-  DROP TABLE [LOS_REZAGADOS].Promocion_x_regla;
+IF OBJECT_ID('LOS_REZAGADOS.Promociones_x_venta','U') IS NOT NULL
+  DROP TABLE [LOS_REZAGADOS].Promociones_x_venta;
+IF OBJECT_ID('LOS_REZAGADOS.Promociones','U') IS NOT NULL
+  DROP TABLE [LOS_REZAGADOS].Promociones;
+IF OBJECT_ID('LOS_REZAGADOS.Promociones_x_producto','U') IS NOT NULL
+  DROP TABLE [LOS_REZAGADOS].Promociones_x_producto;
+IF OBJECT_ID('LOS_REZAGADOS.Promociones_x_regla','U') IS NOT NULL
+  DROP TABLE [LOS_REZAGADOS].Promociones_x_regla;
 
 -- Creacion de tablas
 BEGIN TRANSACTION
@@ -228,7 +228,7 @@ CREATE TABLE [LOS_REZAGADOS].[Descuentos] (
   descuento_id DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
   descuento_codigo DECIMAL (18, 0),
   descuento_descripcion NVARCHAR(255),
-  descuento_fecha_incio DATETIME,
+  descuento_fecha_inicio DATETIME,
   descuento_fecha_fin DATETIME,
   descuento_porcentaje DECIMAL (18, 2),
   descuento_tope DECIMAL (18, 2),
@@ -265,7 +265,7 @@ IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Productos')
 CREATE TABLE [LOS_REZAGADOS].[Productos] (
   producto_id DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
   producto_precio_unitario DECIMAL (18, 2),
-  marca DECIMAL (18, 0), -- FK
+  producto_marca DECIMAL (18, 0), -- FK
   producto_descripcion NVARCHAR(255),
   producto_nombre NVARCHAR(255),
 )
@@ -296,33 +296,33 @@ CREATE TABLE [LOS_REZAGADOS].[Reglas] (
 )
 
 
-IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promocion')
-CREATE TABLE [LOS_REZAGADOS].[Promocion] (
+IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promociones')
+CREATE TABLE [LOS_REZAGADOS].[Promociones] (
   cod_promocion DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
   promocion_descripcion NVARCHAR(255),
   promocion_fecha_inicio DATETIME,
   promocion_fecha_fin DATETIME,
 )
 
-IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promocion_x_venta')
-CREATE TABLE [LOS_REZAGADOS].[Promocion_x_venta] (
+IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promociones_x_venta')
+CREATE TABLE [LOS_REZAGADOS].[Promociones_x_venta] (
   cod_promocion DECIMAL(18, 0),
   ticket_id DECIMAL (18, 0),
   producto DECIMAL (18,0),
   PRIMARY KEY(cod_promocion, ticket_id, producto),
   FOREIGN KEY(ticket_id, producto) REFERENCES [LOS_REZAGADOS].[Ticket_venta_x_producto],
-  FOREIGN KEY(cod_promocion) REFERENCES [LOS_REZAGADOS].[Promocion],
+  FOREIGN KEY(cod_promocion) REFERENCES [LOS_REZAGADOS].[Promociones],
 )
 
-IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promocion_x_producto')
-CREATE TABLE [LOS_REZAGADOS].[Promocion_x_producto] (
+IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promociones_x_producto')
+CREATE TABLE [LOS_REZAGADOS].[Promociones_x_producto] (
   cod_promocion DECIMAL(18, 0),
   producto DECIMAL (18, 0),
   PRIMARY KEY (cod_promocion, producto)
 )
 
-IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promocion_x_regla')
-CREATE TABLE [LOS_REZAGADOS].[Promocion_x_regla] (
+IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promociones_x_regla')
+CREATE TABLE [LOS_REZAGADOS].[Promociones_x_regla] (
   cod_promocion DECIMAL(18, 0),
   regla DECIMAL (18, 0),
   PRIMARY KEY (cod_promocion, regla)
@@ -399,21 +399,18 @@ ALTER TABLE [LOS_REZAGADOS].[Subcategorias]
 ADD FOREIGN KEY (categoria) REFERENCES [LOS_REZAGADOS].Categorias(categoria_id);
 
 ALTER TABLE [LOS_REZAGADOS].[Productos]
-ADD FOREIGN KEY (marca) REFERENCES [LOS_REZAGADOS].Marcas(marca_id);
+ADD FOREIGN KEY (producto_marca) REFERENCES [LOS_REZAGADOS].Marcas(marca_id);
 
-ALTER TABLE [LOS_REZAGADOS].[Productos]
-ADD FOREIGN KEY (marca) REFERENCES [LOS_REZAGADOS].Marcas(marca_id);
+ALTER TABLE [LOS_REZAGADOS].[Promociones_x_producto]
+ADD FOREIGN KEY (cod_promocion) REFERENCES [LOS_REZAGADOS].Promociones(cod_promocion);
 
-ALTER TABLE [LOS_REZAGADOS].[Promocion_x_producto]
-ADD FOREIGN KEY (cod_promocion) REFERENCES [LOS_REZAGADOS].Promocion(cod_promocion);
-
-ALTER TABLE [LOS_REZAGADOS].[Promocion_x_producto]
+ALTER TABLE [LOS_REZAGADOS].[Promociones_x_producto]
 ADD FOREIGN KEY (producto) REFERENCES [LOS_REZAGADOS].Productos(producto_id);
 
-ALTER TABLE [LOS_REZAGADOS].[Promocion_x_regla]
-ADD FOREIGN KEY (cod_promocion) REFERENCES [LOS_REZAGADOS].Promocion(cod_promocion);
+ALTER TABLE [LOS_REZAGADOS].[Promociones_x_regla]
+ADD FOREIGN KEY (cod_promocion) REFERENCES [LOS_REZAGADOS].Promociones(cod_promocion);
 
-ALTER TABLE [LOS_REZAGADOS].[Promocion_x_regla]
+ALTER TABLE [LOS_REZAGADOS].[Promociones_x_regla]
 ADD FOREIGN KEY (regla) REFERENCES [LOS_REZAGADOS].Reglas(regla_id);
 
 COMMIT
@@ -426,23 +423,23 @@ BEGIN TRANSACTION
 INSERT INTO [LOS_REZAGADOS].[Categorias] ([categoria_descripcion])
 SELECT DISTINCT 
 	dato.PRODUCTO_CATEGORIA
-from gd_esquema.Maestra dato
-where dato.PRODUCTO_CATEGORIA IS NOT NULL;
+FROM gd_esquema.Maestra dato
+WHERE dato.PRODUCTO_CATEGORIA IS NOT NULL;
 GO
 
-INSERT INTO [LOS_REZAGADOS].[Subcategorias] ([subcategoria_descripcion],[categoria_id])
-select 
+INSERT INTO [LOS_REZAGADOS].[Subcategorias] ([subcategoria_descripcion],[categoria])
+SELECT 
 	dato.PRODUCTO_SUB_CATEGORIA,
 	categoria.categoria_id
-from gd_esquema.Maestra dato
-left join LOS_REZAGADOS.Categorias categoria on categoria.categoria_descripcion = dato.PRODUCTO_CATEGORIA
-where dato.PRODUCTO_SUB_CATEGORIA IS NOT NULL;
+FROM gd_esquema.Maestra dato
+LEFT JOIN LOS_REZAGADOS.Categorias categoria on categoria.categoria_descripcion = dato.PRODUCTO_CATEGORIA
+WHERE dato.PRODUCTO_SUB_CATEGORIA IS NOT NULL;
 GO
 
 -- Falta el INSERT de subcategorias_x_producto
 
-INSERT INTO [LOS_REZAGADOS].[Supermercados] ([supermercado_nombre],[supermercado_cuit],[supermercado_razon_social],[supermercado_iibb],[supermercado_domicilio],[supermercado_fecha_inicio_act],[super_condicion_fiscal],[supermercado_localidad])
-select 
+INSERT INTO [LOS_REZAGADOS].[Supermercados] ([supermercado_nombre],[supermercado_cuit],[supermercado_razon_social],[supermercado_iibb],[supermercado_domicilio],[supermercado_fecha_inicio_act],[supermercado_condicion_fiscal],[supermercado_localidad])
+SELECT 
 	dato.SUPER_NOMBRE,
 	dato.SUPER_CUIT,
 	dato.SUPER_RAZON_SOC,
@@ -451,35 +448,38 @@ select
 	dato.SUPER_FECHA_INI_ACTIVIDAD,
 	dato.SUPER_CONDICION_FISCAL,
 	localidad.localidad_id
-from gd_esquema.Maestra dato
-left join LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.SUPER_LOCALIDAD
-where dato.SUPER_NOMBRE IS NOT NULL
+FROM gd_esquema.Maestra dato
+LEFT JOIN [LOS_REZAGADOS].[Localidades] localidad on localidad.localidad_descripcion = dato.SUPER_LOCALIDAD
+WHERE dato.SUPER_NOMBRE IS NOT NULL
 	AND dato.SUPER_CUIT IS NOT NULL
 	AND dato.SUPER_IIBB IS NOT NULL
 	AND dato.SUPER_DOMICILIO IS NOT NULL;
 GO
 
-INSERT INTO [LOS_REZAGADOS].[Sucursales] ([sucursal_nombre],[sucursal_localidad],[sucursal_direccion],[supermercado_id])
-select 
+-- Esto tarda mucho para ser un solo super y una docena de sucursales
+INSERT INTO [LOS_REZAGADOS].[Sucursales] ([sucursal_nombre],[sucursal_localidad],[sucursal_direccion],[supermercado])
+SELECT DISTINCT
 	dato.SUCURSAL_NOMBRE,
 	localidad.localidad_id,
-	dato.SUCURSAL_DIRECCION,
-	supermercado.supermercado_id,
-from gd_esquema.Maestra dato
-left join LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.SUCURSAL_LOCALIDAD
-left join LOS_REZAGADOS.Supermercados supermercado on supermercado.supermmercado_descripcion = dato.SUCURSAL_DIRECCION
-where dato.SUCURSAL_NOMBRE IS NOT NULL
-	AND dato.SUCURSAL_DIRECCION IS NOT NULL;
+	dato.SUCURSAL_DIRECCION
+	supermercado.supermercado_id
+FROM gd_esquema.Maestra dato
+LEFT JOIN LOS_REZAGADOS.Localidades localidad on localidad.localidad_descripcion = dato.SUCURSAL_LOCALIDAD
+LEFT JOIN LOS_REZAGADOS.Supermercados supermercado on supermercado.supermercado_nombre = dato.SUPER_NOMBRE
+WHERE dato.SUCURSAL_NOMBRE IS NOT NULL
 GO
 
-INSERT INTO [LOS_REZAGADOS].[Cajas] ([caja_numero],[caja_tipo],[sucursal_id])
-select 
+INSERT INTO [LOS_REZAGADOS].[Cajas] ([caja_numero],[caja_tipo],[sucursal])
+SELECT DISTINCT
 	dato.CAJA_NUMERO,
 	dato.CAJA_TIPO,
 	sucursal.sucursal_id
-from gd_esquema.Maestra dato
-left join LOS_REZAGADOS.Sucursales sucursal on sucursal.localidad_descripcion = dato.CLIENTE_LOCALIDAD --Aca no se como buscar la sucursal_id
-where dato.CAJA_NUMERO IS NOT NULL
+FROM gd_esquema.Maestra dato
+JOIN LOS_REZAGADOS.Sucursales sucursal
+  ON sucursal.sucursal_localidad = dato.SUCURSAL_LOCALIDAD
+  AND sucursal.sucursal_nombre = dato.SUCURSAL_NOMBRE
+  AND sucursal.sucursal_direccion = dato.SUCURSAL_DIRECCION
+WHERE dato.CAJA_NUMERO IS NOT NULL
 	AND dato.CAJA_TIPO IS NOT NULL;
 GO
 
@@ -490,13 +490,12 @@ FROM [gd_esquema].[Maestra] dato
 WHERE PAGO_MEDIO_PAGO IS NOT NULL
 GO
 
-INSERT INTO [LOS_REZAGADOS].[Medios_De_Pago] ([descripcion], [tipo_id])
+INSERT INTO [LOS_REZAGADOS].[Medios_de_pago] ([descripcion], [tipo_id])
 SELECT
     dato.[PAGO_MEDIO_PAGO],
     tmp.tipo_id
-FROM 
-    [gd_esquema].[Maestra] dato
-    INNER JOIN Tipos_Medio_Pago tmp ON dato.[PAGO_TIPO_MEDIO_PAGO] = tmp.tipo_descripcion
+FROM [gd_esquema].[Maestra] dato
+INNER JOIN [LOS_REZAGADOS].[Tipos_Medio_Pago] tmp ON dato.[PAGO_TIPO_MEDIO_PAGO] = tmp.tipo_descripcion
 WHERE dato.[PAGO_TIPO_MEDIO_PAGO] IS NOT NULL;
 GO
 
@@ -507,7 +506,7 @@ FROM [gd_esquema].[Maestra] dato
 GO
 
 INSERT INTO [LOS_REZAGADOS].[Descuentos] ([descuento_codigo],[descuento_descripcion],[descuento_fecha_inicio],[descuento_fecha_fin],[descuento_porcentaje],[descuento_tope])
-SELECT 
+SELECT
 	dato.[DESCUENTO_CODIGO],
 	dato.[DESCUENTO_DESCRIPCION],
 	dato.[DESCUENTO_FECHA_INICIO],
@@ -533,9 +532,65 @@ SELECT DISTINCT
     dato.[PRODUCTO_NOMBRE]
 FROM 
     [gd_esquema].[Maestra] dato
-    INNER JOIN Marcas m ON dato.[PRODUCTO_MARCA] = m.marca_descripcion
+    INNER JOIN [LOS_REZAGADOS].Marcas m ON dato.[PRODUCTO_MARCA] = m.marca_descripcion
 WHERE dato.[PRODUCTO_NOMBRE] IS NOT NULL;
 GO
+
+INSERT INTO [LOS_REZAGADOS].[Detalles_pagos] ([cliente], [detalle_nro_tarjeta], [detalle_vencimiento], [detalle_cuotas])
+SELECT DISTINCT C.cliente_id, dato.PAGO_TARJETA_NRO, dato.PAGO_TARJETA_FECHA_VENC, dato.PAGO_TARJETA_CUOTAS
+FROM gd_esquema.Maestra dato
+LEFT JOIN [LOS_REZAGADOS].[Clientes] C
+	ON C.cliente_nombre = dato.CLIENTE_NOMBRE
+	AND C.cliente_apellido = dato.CLIENTE_APELLIDO
+	AND C.cliente_dni = dato.CLIENTE_DNI
+WHERE dato.PAGO_TARJETA_NRO IS NOT NULL
+	AND dato.PAGO_TARJETA_FECHA_VENC IS NOT NULL
+	AND dato.PAGO_TARJETA_CUOTAS IS NOT NULL
+GO
+
+
+INSERT INTO [LOS_REZAGADOS].[Tipos_comprobantes] ([tipos_comprobantes_descripcion])
+SELECT DISTINCT TICKET_TIPO_COMPROBANTE
+FROM gd_esquema.Maestra
+WHERE TICKET_TIPO_COMPROBANTE IS NOT NULL
+ORDER BY 1
+GO
+
+SET IDENTITY_INSERT [LOS_REZAGADOS].[Promociones] ON;
+INSERT INTO [LOS_REZAGADOS].[Promociones] ([promocion_codigo], [promocion_descripcion], [promocion_fecha_inicio], [promocion_fecha_fin])
+SELECT DISTINCT PROMO_CODIGO, PROMOCION_DESCRIPCION, PROMOCION_FECHA_INICIO, PROMOCION_FECHA_FIN
+FROM gd_esquema.Maestra
+WHERE PROMO_CODIGO IS NOT NULL
+SET IDENTITY_INSERT [LOS_REZAGADOS].[Promociones] OFF;
+GO;
+
+INSERT INTO [LOS_REZAGADOS].[Reglas] ([regla_descripcion], [regla_descuento_aplicable_prod], [regla_cant_aplica_regla], [regla_cant_aplica_descuento], [regla_cant_max_prod], [regla_aplica_misma_marca], [regla_aplica_mismo_prod])
+SELECT DISTINCT REGLA_DESCRIPCION, REGLA_DESCUENTO_APLICABLE_PROD, REGLA_CANT_APLICABLE_REGLA, REGLA_CANT_APLICA_DESCUENTO, REGLA_CANT_MAX_PROD, REGLA_APLICA_MISMA_MARCA, REGLA_APLICA_MISMO_PROD
+FROM gd_esquema.Maestra
+WHERE REGLA_DESCRIPCION IS NOT NULL
+	AND REGLA_DESCUENTO_APLICABLE_PROD IS NOT NULL
+	AND REGLA_CANT_APLICABLE_REGLA IS NOT NULL
+	AND REGLA_CANT_APLICA_DESCUENTO IS NOT NULL
+	AND REGLA_CANT_MAX_PROD IS NOT NULL
+	AND REGLA_APLICA_MISMA_MARCA IS NOT NULL
+	AND REGLA_APLICA_MISMO_PROD IS NOT NULL
+GO;
+
+INSERT INTO [LOS_REZAGADOS].[Promociones_x_regla] ([cod_promocion], [regla])
+SELECT DISTINCT P.cod_promocion, R.regla_id
+FROM [LOS_REZAGADOS].[Reglas] R
+JOIN [gd_esquema].[Maestra] dato ON R.regla_descripcion = dato.REGLA_DESCRIPCION
+JOIN [LOS_REZAGADOS].[Promociones] P ON dato.PROMOCION_DESCRIPCION = P.promocion_descripcion
+GROUP BY P.cod_promocion, R.regla_id
+GO;
+
+INSERT INTO [LOS_REZAGADOS].[Promociones_x_producto] ([cod_promocion], [producto_id])
+SELECT DISTINCT Promo.cod_promocion, Prod.producto_id
+FROM [LOS_REZAGADOS].[Productos] Prod
+JOIN [gd_esquema].[Maestra] dato ON Prod.producto_descripcion = dato.PRODUCTO_DESCRIPCION
+JOIN [LOS_REZAGADOS].[Promociones] Promo ON dato.PROMOCION_DESCRIPCION = Promo.promocion_descripcion
+GROUP BY Promo.cod_promocion, Prod.producto_id
+GO;
 
 COMMIT
 GO
