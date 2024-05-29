@@ -1,6 +1,13 @@
 USE [GD1C2024]
 GO
 
+
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
 -- Creacion de schema si no existe
 IF NOT EXISTS ( SELECT * FROM sys.schemas WHERE name = 'LOS_REZAGADOS')
 BEGIN
@@ -77,7 +84,7 @@ BEGIN TRANSACTION
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Supermercados')
 CREATE TABLE [LOS_REZAGADOS].[Supermercados] (
-  supermercado_id INT PRIMARY KEY,
+  supermercado_id INT IDENTITY(1,1) PRIMARY KEY,
   supermercado_nombre NVARCHAR(255),
   supermercado_cuit NVARCHAR(255),
   supermercado_razon_social NVARCHAR(255),
@@ -90,7 +97,7 @@ CREATE TABLE [LOS_REZAGADOS].[Supermercados] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Sucursales')
 CREATE TABLE [LOS_REZAGADOS].[Sucursales] (
-  sucursal_id DECIMAL (18, 0) PRIMARY KEY,
+  sucursal_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   supermercado INT, -- FK
   sucursal_nombre NVARCHAR(255),
   sucursal_localidad DECIMAL(18, 0), -- FK
@@ -99,7 +106,7 @@ CREATE TABLE [LOS_REZAGADOS].[Sucursales] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Cajas')
 CREATE TABLE [LOS_REZAGADOS].[Cajas] (
-  caja_id DECIMAL (18, 0) PRIMARY KEY,
+  caja_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   caja_numero DECIMAL(18, 0),
   caja_tipo NVARCHAR(255),
   sucursal DECIMAL(18, 0), -- FK
@@ -107,7 +114,7 @@ CREATE TABLE [LOS_REZAGADOS].[Cajas] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Empleados')
 CREATE TABLE [LOS_REZAGADOS].[Empleados] (
-  empleado_id DECIMAL (18, 0) PRIMARY KEY,
+  empleado_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   empleado_nombre NVARCHAR(255),
   empleado_apellido NVARCHAR(255),
   empleado_dni DECIMAL(18, 0),
@@ -119,7 +126,7 @@ CREATE TABLE [LOS_REZAGADOS].[Empleados] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Clientes')
 CREATE TABLE [LOS_REZAGADOS].[Clientes] (
-  cliente_id DECIMAL (18, 0) PRIMARY KEY,
+  cliente_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   cliente_nombre NVARCHAR(255),
   cliente_apellido NVARCHAR(255),
   cliente_dni DECIMAL(18, 0),
@@ -133,26 +140,26 @@ CREATE TABLE [LOS_REZAGADOS].[Clientes] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Localidades')
 CREATE TABLE [LOS_REZAGADOS].[Localidades] (
-  localidad_id DECIMAL (18, 0) PRIMARY KEY,
+  localidad_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   localidad_descripcion NVARCHAR(255),
   provincia DECIMAL(18, 0), -- FK
 )
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Provincias')
 CREATE TABLE [LOS_REZAGADOS].[Provincias] (
-  provincia_id DECIMAL (18, 0) PRIMARY KEY,
+  provincia_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   provincia_descripcion NVARCHAR(255),
 )
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Tipos_comprobantes')
 CREATE TABLE [LOS_REZAGADOS].[Tipos_comprobantes] (
-  tipo_comprobante_id DECIMAL (18, 0) PRIMARY KEY,
+  tipo_comprobante_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   tipos_comprobantes_descripcion NVARCHAR(255),
 )
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Tickets_Venta')
 CREATE TABLE [LOS_REZAGADOS].[Tickets_Venta] (
-  ticket_id DECIMAL (18, 0) PRIMARY KEY,
+  ticket_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   ticket_numero DECIMAL (18, 0), 
   ticket_fecha_hora DATETIME,
   caja DECIMAL(18, 0), -- FK
@@ -166,13 +173,13 @@ CREATE TABLE [LOS_REZAGADOS].[Tickets_Venta] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Estados_envios')
 CREATE TABLE [LOS_REZAGADOS].[Estados_envios] (
-  estado_id DECIMAL (18, 0) PRIMARY KEY,
+  estado_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   estado_descripcion NVARCHAR(255),
 )
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Envios')
 CREATE TABLE [LOS_REZAGADOS].[Envios] (
-  envio_id DECIMAL (18, 0) PRIMARY KEY,
+  envio_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   ticket_id DECIMAL (18, 0), -- FK
   estado DECIMAL (18, 0), -- FK
   cliente DECIMAL (18, 0), -- FK
@@ -185,7 +192,7 @@ CREATE TABLE [LOS_REZAGADOS].[Envios] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Pagos_Ventas')
 CREATE TABLE [LOS_REZAGADOS].[Pagos_Ventas] (
-  nro_pago DECIMAL (18, 0) PRIMARY KEY,
+  nro_pago DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   pago_fecha_hora DATETIME,
   ticket_id DECIMAL (18, 0), -- FK
   detalle DECIMAL (18, 0), -- FK
@@ -196,7 +203,7 @@ CREATE TABLE [LOS_REZAGADOS].[Pagos_Ventas] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Detalles_pagos')
 CREATE TABLE [LOS_REZAGADOS].[Detalles_pagos] (
-  detalle_id DECIMAL (18, 0) PRIMARY KEY,
+  detalle_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   cliente DECIMAL (18, 0), -- FK
   detalle_nro_tarjeta DECIMAL (18, 0),
   detalle_vencimiento DECIMAL (18, 0),
@@ -205,20 +212,20 @@ CREATE TABLE [LOS_REZAGADOS].[Detalles_pagos] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Medios_de_pago')
 CREATE TABLE [LOS_REZAGADOS].[Medios_de_pago] (
-  medio_de_pago_id DECIMAL(18, 0) PRIMARY KEY,
+  medio_de_pago_id DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
   descripcion NVARCHAR(255),
   tipo_id DECIMAL(18, 0), -- FK
 )
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Tipos_medio_pago')
 CREATE TABLE [LOS_REZAGADOS].[Tipos_medio_pago] (
-  tipo_id DECIMAL(18, 0) PRIMARY KEY,
+  tipo_id DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
   tipo_descripcion NVARCHAR(255),
 )
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Descuentos')
 CREATE TABLE [LOS_REZAGADOS].[Descuentos] (
-  descuento_id DECIMAL(18, 0) PRIMARY KEY,
+  descuento_id DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
   descuento_codigo DECIMAL (18, 0),
   descuento_descripcion NVARCHAR(255),
   descuento_fecha_incio DATETIME,
@@ -236,27 +243,27 @@ CREATE TABLE [LOS_REZAGADOS].[Subcategorias_x_producto] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Subcategorias')
 CREATE TABLE [LOS_REZAGADOS].[Subcategorias] (
-  subcategoria_id DECIMAL(18, 0) PRIMARY KEY,
+  subcategoria_id DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
   subcategoria_descripcion NVARCHAR(255),
   categoria DECIMAL (18, 0), -- FK
 )
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Categorias')
 CREATE TABLE [LOS_REZAGADOS].[Categorias] (
-  categoria_id DECIMAL(18, 0) PRIMARY KEY,
+  categoria_id DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
   categoria_descripcion NVARCHAR(255),
 )
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Marcas')
 CREATE TABLE [LOS_REZAGADOS].[Marcas] (
-  marca_id DECIMAL(18, 0) PRIMARY KEY,
+  marca_id DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
   marca_descripcion NVARCHAR(255),
 )
 
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Productos')
 CREATE TABLE [LOS_REZAGADOS].[Productos] (
-  producto_id DECIMAL(18, 0) PRIMARY KEY,
+  producto_id DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
   producto_precio_unitario DECIMAL (18, 2),
   marca DECIMAL (18, 0), -- FK
   producto_descripcion NVARCHAR(255),
@@ -278,7 +285,7 @@ CREATE TABLE [LOS_REZAGADOS].[Ticket_venta_x_producto] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Reglas')
 CREATE TABLE [LOS_REZAGADOS].[Reglas] (
-  regla_id DECIMAL(18, 0) PRIMARY KEY,
+  regla_id DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
   regla_descripcion NVARCHAR(255),
   regla_descuento_aplicable_prod DECIMAL (18, 2),
   regla_cant_aplica_regla DECIMAL (18, 0),
@@ -291,7 +298,7 @@ CREATE TABLE [LOS_REZAGADOS].[Reglas] (
 
 IF NOT EXISTS(SELECT [name] FROM sys.tables WHERE [name] = 'Promocion')
 CREATE TABLE [LOS_REZAGADOS].[Promocion] (
-  cod_promocion DECIMAL(18, 0) PRIMARY KEY,
+  cod_promocion DECIMAL(18, 0) IDENTITY(1,1) PRIMARY KEY,
   promocion_descripcion NVARCHAR(255),
   promocion_fecha_inicio DATETIME,
   promocion_fecha_fin DATETIME,
