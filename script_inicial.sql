@@ -548,19 +548,19 @@ FROM (
       dato.SUPER_LOCALIDAD AS localidad_descripcion,
       tprovincia.provincia_id AS provincia
   FROM gd_esquema.Maestra dato
-  JOIN LOS_REZAGADOS.Provincias tprovincia ON tprovincia.provincia_descripcion = dato.SUPER_PROVINCIA
+  JOIN [LOS_REZAGADOS].Provincias tprovincia ON tprovincia.provincia_descripcion = dato.SUPER_PROVINCIA
   UNION
   SELECT DISTINCT
       dato.SUCURSAL_LOCALIDAD AS localidad_descripcion,
       tprovincia.provincia_id AS provincia
   FROM gd_esquema.Maestra dato
-  JOIN LOS_REZAGADOS.Provincias tprovincia ON tprovincia.provincia_descripcion = dato.SUCURSAL_PROVINCIA
+  JOIN [LOS_REZAGADOS].Provincias tprovincia ON tprovincia.provincia_descripcion = dato.SUCURSAL_PROVINCIA
   UNION
     SELECT DISTINCT
       dato.CLIENTE_LOCALIDAD AS localidad_descripcion,
       tprovincia.provincia_id AS provincia
     FROM gd_esquema.Maestra dato
-      JOIN LOS_REZAGADOS.Provincias tprovincia ON tprovincia.provincia_descripcion = dato.CLIENTE_PROVINCIA
+      JOIN [LOS_REZAGADOS].Provincias tprovincia ON tprovincia.provincia_descripcion = dato.CLIENTE_PROVINCIA
 ) AS LOCALIDADES
 WHERE localidad_descripcion IS NOT NULL
 GO
@@ -576,10 +576,13 @@ SELECT DISTINCT
   dato.CLIENTE_MAIL,
   dato.CLIENTE_FECHA_NACIMIENTO,
   dato.CLIENTE_DOMICILIO,
-  localidad.localidad_id
+  l.localidad_id
 FROM gd_esquema.Maestra dato
-  LEFT JOIN LOS_REZAGADOS.Provincias provincia ON provincia.provincia_descripcion = dato.CLIENTE_PROVINCIA
-  LEFT JOIN LOS_REZAGADOS.Localidades localidad ON localidad.localidad_descripcion = dato.CLIENTE_LOCALIDAD AND localidad.provincia = provincia.provincia_id
+LEFT JOIN [LOS_REZAGADOS].Provincias p
+  ON p.provincia_descripcion = dato.CLIENTE_PROVINCIA
+LEFT JOIN [LOS_REZAGADOS].Localidades l
+  ON l.localidad_descripcion = dato.CLIENTE_LOCALIDAD
+  AND l.provincia = p.provincia_id
 WHERE dato.CLIENTE_DNI IS NOT NULL;
 GO
 
@@ -609,9 +612,10 @@ INSERT INTO [LOS_REZAGADOS].[Subcategorias]
   ([subcategoria_descripcion],[categoria])
 SELECT DISTINCT
   dato.PRODUCTO_SUB_CATEGORIA,
-  categoria.categoria_id
+  c.categoria_id
 FROM gd_esquema.Maestra dato
-  LEFT JOIN LOS_REZAGADOS.Categorias categoria on categoria.categoria_descripcion = dato.PRODUCTO_CATEGORIA
+LEFT JOIN [LOS_REZAGADOS].Categorias c
+  ON c.categoria_descripcion = dato.PRODUCTO_CATEGORIA
 WHERE dato.PRODUCTO_SUB_CATEGORIA IS NOT NULL;
 GO
 
@@ -625,9 +629,10 @@ SELECT DISTINCT
   dato.SUPER_DOMICILIO,
   dato.SUPER_FECHA_INI_ACTIVIDAD,
   dato.SUPER_CONDICION_FISCAL,
-  localidad.localidad_id
+  l.localidad_id
 FROM gd_esquema.Maestra dato
-  LEFT JOIN [LOS_REZAGADOS].[Localidades] localidad on localidad.localidad_descripcion = dato.SUPER_LOCALIDAD
+LEFT JOIN [LOS_REZAGADOS].[Localidades] l
+  ON l.localidad_descripcion = dato.SUPER_LOCALIDAD
 WHERE dato.SUPER_NOMBRE IS NOT NULL
   AND dato.SUPER_CUIT IS NOT NULL
   AND dato.SUPER_IIBB IS NOT NULL
@@ -638,12 +643,14 @@ INSERT INTO [LOS_REZAGADOS].[Sucursales]
   ([sucursal_nombre],[sucursal_localidad],[sucursal_direccion],[supermercado])
 SELECT DISTINCT
   dato.SUCURSAL_NOMBRE,
-  localidad.localidad_id,
+  l.localidad_id,
   dato.SUCURSAL_DIRECCION,
-  supermercado.supermercado_id
+  s.supermercado_id
 FROM gd_esquema.Maestra dato
-  LEFT JOIN LOS_REZAGADOS.Localidades localidad ON localidad.localidad_descripcion = dato.SUCURSAL_LOCALIDAD
-  LEFT JOIN LOS_REZAGADOS.Supermercados supermercado on supermercado.supermercado_nombre = dato.SUPER_NOMBRE
+LEFT JOIN [LOS_REZAGADOS].Localidades l
+  ON l.localidad_descripcion = dato.SUCURSAL_LOCALIDAD
+LEFT JOIN [LOS_REZAGADOS].Supermercados s
+  ON s.supermercado_nombre = dato.SUPER_NOMBRE
 WHERE dato.SUCURSAL_NOMBRE IS NOT NULL
 GO
 
@@ -654,11 +661,11 @@ SELECT DISTINCT
   dato.CAJA_TIPO,
   s.sucursal_id
 FROM gd_esquema.Maestra dato
-  LEFT JOIN LOS_REZAGADOS.Localidades l ON dato.SUCURSAL_LOCALIDAD = l.localidad_descripcion
-  LEFT JOIN LOS_REZAGADOS.Sucursales s
+LEFT JOIN [LOS_REZAGADOS].Localidades l ON dato.SUCURSAL_LOCALIDAD = l.localidad_descripcion
+LEFT JOIN [LOS_REZAGADOS].Sucursales s
   ON s.sucursal_localidad = l.localidad_id
-    AND s.sucursal_nombre = dato.SUCURSAL_NOMBRE
-    AND s.sucursal_direccion = dato.SUCURSAL_DIRECCION
+  AND s.sucursal_nombre = dato.SUCURSAL_NOMBRE
+  AND s.sucursal_direccion = dato.SUCURSAL_DIRECCION
 WHERE dato.CAJA_NUMERO IS NOT NULL
   AND dato.CAJA_TIPO IS NOT NULL;
 GO
@@ -717,7 +724,8 @@ SELECT DISTINCT
   dato.[PRODUCTO_DESCRIPCION],
   dato.[PRODUCTO_NOMBRE]
 FROM [gd_esquema].[Maestra] dato
-  JOIN [LOS_REZAGADOS].Marcas m ON dato.[PRODUCTO_MARCA] = m.marca_descripcion
+JOIN [LOS_REZAGADOS].Marcas m
+  ON dato.[PRODUCTO_MARCA] = m.marca_descripcion
 WHERE dato.[PRODUCTO_NOMBRE] IS NOT NULL
 GO
 
@@ -725,10 +733,10 @@ INSERT INTO [LOS_REZAGADOS].[Detalles_pagos]
   ([cliente], [detalle_nro_tarjeta], [detalle_vencimiento], [detalle_cuotas])
 SELECT DISTINCT c.cliente_id, dato.PAGO_TARJETA_NRO, dato.PAGO_TARJETA_FECHA_VENC, dato.PAGO_TARJETA_CUOTAS
 FROM gd_esquema.Maestra dato
-  LEFT JOIN [LOS_REZAGADOS].[Clientes] c
+LEFT JOIN [LOS_REZAGADOS].[Clientes] c
   ON c.cliente_nombre = dato.CLIENTE_NOMBRE
-    AND c.cliente_apellido = dato.CLIENTE_APELLIDO
-    AND c.cliente_dni = dato.CLIENTE_DNI
+  AND c.cliente_apellido = dato.CLIENTE_APELLIDO
+  AND c.cliente_dni = dato.CLIENTE_DNI
 WHERE dato.PAGO_TARJETA_NRO IS NOT NULL
   AND dato.PAGO_TARJETA_FECHA_VENC IS NOT NULL
   AND dato.PAGO_TARJETA_CUOTAS IS NOT NULL
@@ -755,32 +763,33 @@ INSERT INTO [LOS_REZAGADOS].[Tickets_Venta]
 SELECT DISTINCT
   dato.TICKET_NUMERO,
   dato.TICKET_FECHA_HORA,
-  caja.caja_id,
-  empleado.empleado_id,
-  comprobante.tipo_comprobante_id,
+  c.caja_id,
+  e.empleado_id,
+  tc.tipo_comprobante_id,
   dato.TICKET_SUBTOTAL_PRODUCTOS,
   dato.TICKET_TOTAL_DESCUENTO_APLICADO,
   dato.TICKET_TOTAL_DESCUENTO_APLICADO_MP,
   dato.TICKET_TOTAL_TICKET
 FROM gd_esquema.Maestra dato
-  LEFT JOIN LOS_REZAGADOS.Tipos_comprobantes comprobante ON comprobante.tipos_comprobantes_descripcion = dato.TICKET_TIPO_COMPROBANTE
-  LEFT JOIN LOS_REZAGADOS.Empleados empleado
-  ON empleado.empleado_dni = dato.EMPLEADO_DNI
-  LEFT JOIN LOS_REZAGADOS.Supermercados supermercado
-  ON supermercado.supermercado_cuit = dato.SUPER_CUIT
-  LEFT JOIN LOS_REZAGADOS.Provincias provincia ON provincia.provincia_descripcion = dato.SUCURSAL_PROVINCIA
-  LEFT JOIN LOS_REZAGADOS.Localidades localidad
-  ON localidad.localidad_descripcion = dato.SUCURSAL_LOCALIDAD
-    AND localidad.provincia = provincia.provincia_id
-  LEFT JOIN LOS_REZAGADOS.Sucursales sucursal
-  ON sucursal.sucursal_nombre = dato.SUCURSAL_NOMBRE
-    AND sucursal.sucursal_direccion = dato.SUCURSAL_DIRECCION
-    AND sucursal.supermercado = supermercado.supermercado_id
-    AND sucursal.sucursal_localidad = localidad.localidad_id
-  LEFT JOIN LOS_REZAGADOS.Cajas caja
-  ON caja.caja_numero = dato.CAJA_NUMERO
-    AND caja.caja_tipo = dato.CAJA_TIPO
-    AND caja.sucursal = sucursal.sucursal_id
+LEFT JOIN [LOS_REZAGADOS].Tipos_comprobantes tc
+  ON tc.tipos_comprobantes_descripcion = dato.TICKET_TIPO_COMPROBANTE
+LEFT JOIN [LOS_REZAGADOS].Empleados e
+  ON e.empleado_dni = dato.EMPLEADO_DNI
+LEFT JOIN [LOS_REZAGADOS].Supermercados s
+  ON s.supermercado_cuit = dato.SUPER_CUIT
+LEFT JOIN [LOS_REZAGADOS].Provincias p ON p.provincia_descripcion = dato.SUCURSAL_PROVINCIA
+LEFT JOIN [LOS_REZAGADOS].Localidades l
+  ON l.localidad_descripcion = dato.SUCURSAL_LOCALIDAD
+  AND l.provincia = p.provincia_id
+LEFT JOIN [LOS_REZAGADOS].Sucursales suc
+  ON suc.sucursal_nombre = dato.SUCURSAL_NOMBRE
+  AND suc.sucursal_direccion = dato.SUCURSAL_DIRECCION
+  AND suc.supermercado = s.supermercado_id
+  AND suc.sucursal_localidad = l.localidad_id
+LEFT JOIN [LOS_REZAGADOS].Cajas c
+  ON c.caja_numero = dato.CAJA_NUMERO
+  AND c.caja_tipo = dato.CAJA_TIPO
+  AND c.sucursal = suc.sucursal_id
 WHERE dato.CAJA_NUMERO IS NOT NULL
 GO
 
@@ -808,26 +817,26 @@ GO
 
 INSERT INTO [LOS_REZAGADOS].[Promociones_x_regla]
   ([cod_promocion], [regla])
-SELECT DISTINCT P.cod_promocion, R.regla_id
-FROM [LOS_REZAGADOS].[Reglas] R
-  JOIN [gd_esquema].[Maestra] dato ON R.regla_descripcion = dato.REGLA_DESCRIPCION
-  JOIN [LOS_REZAGADOS].[Promociones] P ON dato.PROMOCION_DESCRIPCION = P.promocion_descripcion
-GROUP BY P.cod_promocion, R.regla_id
+SELECT DISTINCT p.cod_promocion, r.regla_id
+FROM [LOS_REZAGADOS].[Reglas] r
+  JOIN [gd_esquema].[Maestra] dato ON r.regla_descripcion = dato.REGLA_DESCRIPCION
+  JOIN [LOS_REZAGADOS].[Promociones] p ON dato.PROMOCION_DESCRIPCION = p.promocion_descripcion
+GROUP BY p.cod_promocion, r.regla_id
 GO
 
 INSERT INTO [LOS_REZAGADOS].[Promociones_x_producto]
   ([cod_promocion], [producto])
 SELECT DISTINCT promo.cod_promocion, prod.producto_id
 FROM [LOS_REZAGADOS].[Productos] prod
-  JOIN [gd_esquema].[Maestra] dato
+JOIN [gd_esquema].[Maestra] dato
   ON prod.producto_descripcion = dato.PRODUCTO_DESCRIPCION
-    AND prod.producto_nombre = dato.PRODUCTO_NOMBRE
-    AND prod.producto_precio_unitario = dato.PRODUCTO_PRECIO
-  JOIN [LOS_REZAGADOS].[Promociones] promo
+  AND prod.producto_nombre = dato.PRODUCTO_NOMBRE
+  AND prod.producto_precio_unitario = dato.PRODUCTO_PRECIO
+JOIN [LOS_REZAGADOS].[Promociones] promo
   ON dato.PROMOCION_DESCRIPCION = promo.promocion_descripcion
-    AND dato.PROMO_CODIGO = promo.cod_promocion
-    AND dato.PROMOCION_FECHA_INICIO = promo.promocion_fecha_inicio
-    AND dato.PROMOCION_FECHA_FIN = promo.promocion_fecha_fin
+  AND dato.PROMO_CODIGO = promo.cod_promocion
+  AND dato.PROMOCION_FECHA_INICIO = promo.promocion_fecha_inicio
+  AND dato.PROMOCION_FECHA_FIN = promo.promocion_fecha_fin
 WHERE dato.PRODUCTO_NOMBRE IS NOT NULL OR dato.PROMO_CODIGO IS NOT NULL
 GO
 
@@ -846,39 +855,37 @@ SELECT DISTINCT
   dato.TICKET_DET_TOTAL,
   ISNULL(dato.PROMO_APLICADA_DESCUENTO, 0) AS promo_aplicada_descuento
 FROM gd_esquema.Maestra dato
-  INNER JOIN LOS_REZAGADOS.Tickets_Venta tv
+INNER JOIN [LOS_REZAGADOS].Tickets_Venta tv
   ON dato.TICKET_NUMERO = tv.ticket_numero
-    AND LOS_REZAGADOS.fn_GetTipoComprobanteId(dato.TICKET_TIPO_COMPROBANTE) = tv.tipo_comprobante
+  AND [LOS_REZAGADOS].fn_GetTipoComprobanteId(dato.TICKET_TIPO_COMPROBANTE) = tv.tipo_comprobante
 
-  INNER JOIN LOS_REZAGADOS.Marcas m
+INNER JOIN [LOS_REZAGADOS].Marcas m
   ON m.marca_descripcion = dato.PRODUCTO_MARCA
 
-  INNER JOIN LOS_REZAGADOS.Productos p
+INNER JOIN [LOS_REZAGADOS].Productos p
   ON p.producto_descripcion = dato.PRODUCTO_DESCRIPCION
-    AND p.producto_nombre = dato.PRODUCTO_NOMBRE
-    AND p.producto_precio_unitario = dato.PRODUCTO_PRECIO
-    AND p.producto_marca = m.marca_id
+  AND p.producto_nombre = dato.PRODUCTO_NOMBRE
+  AND p.producto_precio_unitario = dato.PRODUCTO_PRECIO
+  AND p.producto_marca = m.marca_id
 WHERE tv.ticket_id = 22
 GO
 
 INSERT INTO [LOS_REZAGADOS].[Envios]
-  (
-  ticket_id,
-  estado, -- FK
-  cliente, -- FK
-  envio_fecha_programada,
-  envio_hora_inicio,
-  envio_hora_fin,
-  envio_costo,
-  envio_fecha_entrega
-  )
+  ([ticket_id],
+  [estado], -- FK
+  [cliente], -- FK
+  [envio_fecha_programada],
+  [envio_hora_inicio],
+  [envio_hora_fin],
+  [envio_costo],
+  [envio_fecha_entrega])
 SELECT DISTINCT [LOS_REZAGADOS].fn_GetTipoComprobanteId(dato.TICKET_TIPO_COMPROBANTE), ee.estado_id, c.cliente_id, dato.ENVIO_FECHA_PROGRAMADA, dato.ENVIO_HORA_INICIO, dato.ENVIO_HORA_FIN, dato.ENVIO_COSTO, dato.ENVIO_FECHA_ENTREGA
 FROM [LOS_REZAGADOS].[Clientes] c
-  JOIN [gd_esquema].[Maestra] dato
+JOIN [gd_esquema].[Maestra] dato
   ON c.cliente_nombre = dato.CLIENTE_NOMBRE
-    AND c.cliente_apellido = dato.CLIENTE_APELLIDO
-    AND c.cliente_dni = dato.CLIENTE_DNI
-  JOIN [LOS_REZAGADOS].[Estados_envios] ee
+  AND c.cliente_apellido = dato.CLIENTE_APELLIDO
+  AND c.cliente_dni = dato.CLIENTE_DNI
+JOIN [LOS_REZAGADOS].[Estados_envios] ee
   ON dato.ENVIO_ESTADO = ee.estado_descripcion
 GO
 
@@ -897,30 +904,30 @@ SELECT DISTINCT
   d.descuento_id,
   dato.PAGO_IMPORTE
 FROM gd_esquema.Maestra dato
-  LEFT JOIN LOS_REZAGADOS.Clientes c
+LEFT JOIN [LOS_REZAGADOS].Clientes c
   ON c.cliente_dni = dato.CLIENTE_DNI
-  LEFT JOIN LOS_REZAGADOS.Detalles_pagos dp
+LEFT JOIN [LOS_REZAGADOS].Detalles_pagos dp
   ON dp.detalle_nro_tarjeta = dato.PAGO_TARJETA_NRO
-    AND dp.detalle_cuotas = dato.PAGO_TARJETA_CUOTAS
-    AND dp.detalle_vencimiento = dato.PAGO_TARJETA_FECHA_VENC
-    AND dp.cliente = c.cliente_id
-  LEFT JOIN LOS_REZAGADOS.Tipos_comprobantes tc
+  AND dp.detalle_cuotas = dato.PAGO_TARJETA_CUOTAS
+  AND dp.detalle_vencimiento = dato.PAGO_TARJETA_FECHA_VENC
+  AND dp.cliente = c.cliente_id
+LEFT JOIN [LOS_REZAGADOS].Tipos_comprobantes tc
   ON tc.tipos_comprobantes_descripcion = dato.TICKET_TIPO_COMPROBANTE
-  LEFT JOIN LOS_REZAGADOS.Tickets_Venta tv
+LEFT JOIN [LOS_REZAGADOS].Tickets_Venta tv
   ON tv.ticket_numero = dato.TICKET_NUMERO
-    AND tv.tipo_comprobante = tc.tipo_comprobante_id
-  LEFT JOIN LOS_REZAGADOS.Tipos_medio_pago tmp
+  AND tv.tipo_comprobante = tc.tipo_comprobante_id
+LEFT JOIN [LOS_REZAGADOS].Tipos_medio_pago tmp
   ON tmp.tipo_descripcion = dato.PAGO_TIPO_MEDIO_PAGO
-  LEFT JOIN LOS_REZAGADOS.Medios_de_pago mdp
+LEFT JOIN [LOS_REZAGADOS].Medios_de_pago mdp
   ON mdp.tipo_id = tmp.tipo_id
-    AND mdp.descripcion = dato.PAGO_MEDIO_PAGO
-  LEFT JOIN LOS_REZAGADOS.Descuentos d
+  AND mdp.descripcion = dato.PAGO_MEDIO_PAGO
+LEFT JOIN [LOS_REZAGADOS].Descuentos d
   ON d.descuento_codigo = dato.DESCUENTO_CODIGO
-    AND d.descuento_descripcion = dato.DESCUENTO_DESCRIPCION
-    AND d.descuento_fecha_inicio = dato.DESCUENTO_FECHA_INICIO
-    AND d.descuento_fecha_fin = dato.DESCUENTO_FECHA_FIN
-    AND d.descuento_porcentaje = dato.DESCUENTO_PORCENTAJE_DESC
-    AND d.descuento_tope = dato.DESCUENTO_TOPE;
+  AND d.descuento_descripcion = dato.DESCUENTO_DESCRIPCION
+  AND d.descuento_fecha_inicio = dato.DESCUENTO_FECHA_INICIO
+  AND d.descuento_fecha_fin = dato.DESCUENTO_FECHA_FIN
+  AND d.descuento_porcentaje = dato.DESCUENTO_PORCENTAJE_DESC
+  AND d.descuento_tope = dato.DESCUENTO_TOPE;
 GO
 
 INSERT INTO [LOS_REZAGADOS].[Promociones_x_venta]
@@ -929,12 +936,12 @@ SELECT DISTINCT
   p.cod_promocion,
   tvp.ticket_venta_producto
 FROM gd_esquema.Maestra dato
-  INNER JOIN LOS_REZAGADOS.Promociones p
+INNER JOIN [LOS_REZAGADOS].Promociones p
   ON p.promocion_descripcion = dato.PROMOCION_DESCRIPCION
-    AND p.promocion_fecha_inicio = dato.PROMOCION_FECHA_INICIO
-    AND p.promocion_fecha_fin = dato.PROMOCION_FECHA_FIN
-  INNER JOIN LOS_REZAGADOS.Ticket_venta_x_producto tvp
+  AND p.promocion_fecha_inicio = dato.PROMOCION_FECHA_INICIO
+  AND p.promocion_fecha_fin = dato.PROMOCION_FECHA_FIN
+INNER JOIN [LOS_REZAGADOS].Ticket_venta_x_producto tvp
   ON tvp.promo_aplicada_descuento = dato.PROMO_APLICADA_DESCUENTO
-    AND tvp.ticket_det_total = dato.TICKET_DET_TOTAL
-    AND tvp.ticket_det_precio = dato.TICKET_DET_PRECIO
+  AND tvp.ticket_det_total = dato.TICKET_DET_TOTAL
+  AND tvp.ticket_det_precio = dato.TICKET_DET_PRECIO
 GO
