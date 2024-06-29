@@ -943,5 +943,24 @@ INNER JOIN [LOS_REZAGADOS].Ticket_venta_x_producto tvp
   AND tvp.ticket_det_precio = dato.TICKET_DET_PRECIO
 GO
 
+INSERT INTO [LOS_REZAGADOS].[Subcategorias_x_producto]
+([subcategoria_id], [producto_id])
+SELECT DISTINCT
+  p.producto_id,
+  s.subcategoria_id
+FROM gd_esquema.Maestra dato
+INNER JOIN [LOS_REZAGADOS].Marcas m
+  ON m.marca_descripcion = dato.PRODUCTO_MARCA
+INNER JOIN [LOS_REZAGADOS].Productos p
+  ON p.producto_descripcion = dato.PRODUCTO_DESCRIPCION
+  AND p.producto_nombre = dato.PRODUCTO_NOMBRE
+  AND p.producto_precio_unitario = dato.PRODUCTO_PRECIO
+  AND p.producto_marca = m.marca_id
+INNER JOIN [LOS_REZAGADOS].Subcategorias s
+  ON s.subcategoria_descripcion = dato.PRODUCTO_SUB_CATEGORIA
+INNER JOIN [LOS_REZAGADOS].Categorias c
+  ON c.categoria_descripcion = dato.PRODUCTO_CATEGORIA
+GO
+
 COMMIT
 GO

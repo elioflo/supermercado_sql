@@ -19,12 +19,12 @@ GO
 
 -- Borrado de FK Constraints
 
--- DECLARE @DropConstraints NVARCHAR(max) = ''
--- SELECT @DropConstraints += 'ALTER TABLE ' + QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id)) + '.'
---                         +  QUOTENAME(OBJECT_NAME(parent_object_id)) + ' ' + 'DROP CONSTRAINT' + QUOTENAME(name)
--- FROM sys.foreign_keys
--- EXECUTE sp_executesql @DropConstraints;
--- GO
+DECLARE @DropConstraints NVARCHAR(max) = ''
+SELECT @DropConstraints += 'ALTER TABLE ' + QUOTENAME(OBJECT_SCHEMA_NAME(parent_object_id)) + '.'
+                        +  QUOTENAME(OBJECT_NAME(parent_object_id)) + ' ' + 'DROP CONSTRAINT' + QUOTENAME(name)
+FROM sys.foreign_keys
+EXECUTE sp_executesql @DropConstraints;
+GO
 
 -- Borrado de funciones auxiliar si existe
 
@@ -32,6 +32,8 @@ DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetRangoEdadId;
 DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetTurnoId;
 DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetCuatrimestre;
 DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetTiempoId;
+DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetCategoriaId;
+DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetUbicacionId;
 
 -- Borrado de vistas si existen en caso que el schema exista
 
@@ -40,12 +42,14 @@ IF OBJECT_ID('LOS_REZAGADOS.v_porcentaje_descuento_aplicados') IS NOT NULL
 
 -- Borrado de tablas si existen en caso que el schema exista
 
-IF OBJECT_ID('LOS_REZAGADOS.BI_hechos_descuentos','U') IS NOT NULL
-  DROP TABLE [LOS_REZAGADOS].BI_hechos_descuentos;
+IF OBJECT_ID('LOS_REZAGADOS.BI_hechos_pagos','U') IS NOT NULL
+  DROP TABLE [LOS_REZAGADOS].BI_hechos_pagos;
 IF OBJECT_ID('LOS_REZAGADOS.BI_hechos_ventas','U') IS NOT NULL
   DROP TABLE [LOS_REZAGADOS].BI_hechos_ventas;
 IF OBJECT_ID('LOS_REZAGADOS.BI_hechos_envios','U') IS NOT NULL
   DROP TABLE [LOS_REZAGADOS].BI_hechos_envios;
+IF OBJECT_ID('LOS_REZAGADOS.BI_hechos_productos','U') IS NOT NULL
+  DROP TABLE [LOS_REZAGADOS].BI_hechos_productos;
 IF OBJECT_ID('LOS_REZAGADOS.BI_dimension_tiempos','U') IS NOT NULL
   DROP TABLE [LOS_REZAGADOS].BI_dimension_tiempos;
 IF OBJECT_ID('LOS_REZAGADOS.BI_dimension_medios_de_pago','U') IS NOT NULL
@@ -75,22 +79,6 @@ CREATE TABLE [LOS_REZAGADOS].[BI_dimension_tiempos]
   anio INT
 )
 
--- // WIP
--- IF NOT EXISTS(SELECT [name]
--- FROM sys.tables
--- WHERE [name] = 'BI_dimension_ticket')
--- CREATE TABLE [LOS_REZAGADOS].[BI_dimension_ticket]
--- (
---   ticket_id INT PRIMARY KEY,
---   tiempo INT NOT NULL,
---   ticket_total_descuento DECIMAL(18, 2),
---   ticket_total_ticket DECIMAL(18, 2)
--- )
-
--- ALTER TABLE [LOS_REZAGADOS].[BI_dimension_ticket]
--- ADD FOREIGN KEY (tiempo) REFERENCES [LOS_REZAGADOS].BI_dimension_tiempos(tiempo_id);
-
-
 IF NOT EXISTS(SELECT [name]
 FROM sys.tables
 WHERE [name] = 'BI_dimension_categorias')
@@ -106,7 +94,7 @@ FROM sys.tables
 WHERE [name] = 'BI_dimension_medios_de_pago')
 CREATE TABLE [LOS_REZAGADOS].[BI_dimension_medios_de_pago]
 (
-  medios_de_pago_id INT IDENTITY(1,1) PRIMARY KEY,
+  medios_de_pago_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   descripcion NVARCHAR (255),
   tipo_descripcion NVARCHAR (255),
 )
@@ -151,16 +139,35 @@ CREATE TABLE [LOS_REZAGADOS].[BI_dimension_ubicaciones]
 
 IF NOT EXISTS(SELECT [name]
 FROM sys.tables
-WHERE [name] = 'BI_hechos_descuentos')
-CREATE TABLE [LOS_REZAGADOS].[BI_hechos_descuentos]
+WHERE [name] = 'BI_hechos_pagos')
+CREATE TABLE [LOS_REZAGADOS].[BI_hechos_pagos]
 (
+  hechos_pagos_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
+  tiempo_id INT,
+  sucursal_id INT,
+  rango_cliente INT,
+  medios_de_pago_id DECIMAL(18, 0),
+  detalle_cuotas DECIMAL(18, 0),
+  ticket_id DECIMAL(18, 0),
+  importe DECIMAL(18, 2),
+  FOREIGN KEY(tiempo_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_tiempos],
+  FOREIGN KEY(sucursal_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_categorias],
+  FOREIGN KEY(rango_cliente) REFERENCES [LOS_REZAGADOS].[BI_dimension_rangos_edades],
+  FOREIGN KEY(medios_de_pago_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_medios_de_pago],
+)
+
+IF NOT EXISTS(SELECT [name]
+FROM sys.tables
+WHERE [name] = 'BI_hechos_productos')
+CREATE TABLE [LOS_REZAGADOS].[BI_hechos_productos]
+(
+  hechos_productos_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   tiempo_id INT,
   categoria_id INT,
-  medio_de_pago_id INT,
-  PRIMARY KEY(tiempo_id, categoria_id, medio_de_pago_id),
+  producto_id DECIMAL(18, 2),
+  promo_aplicada_descuento DECIMAL(18, 2)
   FOREIGN KEY(tiempo_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_tiempos],
   FOREIGN KEY(categoria_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_categorias],
-  FOREIGN KEY(medio_de_pago_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_medios_de_pago],
 )
 
 IF NOT EXISTS(SELECT [name]
@@ -168,14 +175,19 @@ FROM sys.tables
 WHERE [name] = 'BI_hechos_envios')
 CREATE TABLE [LOS_REZAGADOS].[BI_hechos_envios]
 (
-  sucursal_id INT,
+  hechos_envios_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   tiempo_id INT,
-  rango_id INT,
+  sucursal_id INT,
+  rango_cliente INT,
   ubicacion_id INT,
-  PRIMARY KEY(sucursal_id, tiempo_id, rango_id, ubicacion_id),
+  envio DECIMAL(18,0),
+  estado_envio NVARCHAR(255),
+  envio_fecha_programada DATETIME,
+  envio_fecha_entrega DATETIME,
+  costo DECIMAL(18,2),
   FOREIGN KEY(sucursal_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_sucursales],
   FOREIGN KEY(tiempo_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_tiempos],
-  FOREIGN KEY(rango_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_rangos_edades],
+  FOREIGN KEY(rango_cliente) REFERENCES [LOS_REZAGADOS].[BI_dimension_rangos_edades],
   FOREIGN KEY(ubicacion_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_ubicaciones],
 )
 
@@ -184,21 +196,21 @@ FROM sys.tables
 WHERE [name] = 'BI_hechos_ventas')
 CREATE TABLE [LOS_REZAGADOS].[BI_hechos_ventas]
 (
+  hechos_ventas_id DECIMAL (18, 0) IDENTITY(1,1) PRIMARY KEY,
   ubicacion_id INT,
   tiempo_id INT,
   rango_empleado INT,
-  rango_cliente INT,
   turno_id INT,
-  ticket_id DECIMAL (18, 2),
-  caja_tipo INT,
-  ticket_total_descuento DECIMAL(18, 2),
-  ticket_total_ticket DECIMAL(18, 2),
-  PRIMARY KEY(ubicacion_id, tiempo_id, rango_empleado, rango_cliente, turno_id),
+  ticket_nro DECIMAL (18, 2),
+  caja_tipo NVARCHAR(255),
+  ticket_sub_total DECIMAL(18, 2),
+  producto DECIMAL(18, 2),
+  ticket_detalle_cantidad DECIMAL(10, 0),
+  descuentos DECIMAL(18, 2)
   FOREIGN KEY(ubicacion_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_ubicaciones],
   FOREIGN KEY(tiempo_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_tiempos],
   FOREIGN KEY(turno_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_turnos],
   FOREIGN KEY(rango_empleado) REFERENCES [LOS_REZAGADOS].[BI_dimension_rangos_edades],
-  FOREIGN KEY(rango_cliente) REFERENCES [LOS_REZAGADOS].[BI_dimension_rangos_edades],
 )
 
 COMMIT
@@ -206,7 +218,7 @@ GO
 
 -- ================= Funciones auxiliares ==================
 
-CREATE FUNCTION [LOS_REZAGADOS].fn_GetRangoEdadId(@fecha_nacimiento DATE) RETURNS INT AS
+CREATE FUNCTION [LOS_REZAGADOS].fn_GetRangoEdadId(@fecha_nacimiento datetime) RETURNS INT AS
 BEGIN
   DECLARE @rango_id INT;
   DECLARE @edad INT;
@@ -232,7 +244,7 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION [LOS_REZAGADOS].fn_GetTurnoId(@fecha_compra DATE) RETURNS INT AS
+CREATE FUNCTION [LOS_REZAGADOS].fn_GetTurnoId(@fecha_compra DATETIME) RETURNS INT AS
 BEGIN
   DECLARE @turno_id INT;
   DECLARE @hora INT;
@@ -259,13 +271,13 @@ BEGIN
 END
 GO
 
-CREATE FUNCTION [LOS_REZAGADOS].fn_GetCuatrimestre(@fecha datetime) RETURNS SMALLINT AS
+CREATE FUNCTION [LOS_REZAGADOS].fn_GetCuatrimestre(@fecha DATETIME) RETURNS SMALLINT AS
 BEGIN
   RETURN (CEILING (DATEPART (mm,@fecha)* 1.0 / 4 ) )
 END
 GO
 
-CREATE FUNCTION [LOS_REZAGADOS].fn_GetTiempoId(@fecha DATE) RETURNS INT AS
+CREATE FUNCTION [LOS_REZAGADOS].fn_GetTiempoId(@fecha DATETIME) RETURNS INT AS
 BEGIN
 	DECLARE @anio INT,
 			@mes INT,
@@ -284,6 +296,30 @@ BEGIN
 END
 GO
 
+CREATE FUNCTION [LOS_REZAGADOS].fn_GetCategoriaId(@categoria NVARCHAR(255), @subcategoria NVARCHAR(255)) RETURNS INT AS
+BEGIN
+    DECLARE @categoria_id INT
+
+  	SELECT @categoria_id = categoria_id
+		FROM [LOS_REZAGADOS].BI_dimension_categorias C
+		WHERE C.categoria_descripcion = @categoria AND C.subcategoria_descripcion = @subcategoria
+
+    RETURN @categoria_id
+END
+GO
+
+CREATE FUNCTION [LOS_REZAGADOS].fn_GetUbicacionId(@localidad NVARCHAR(255), @provincia NVARCHAR(255)) RETURNS INT AS
+BEGIN
+    DECLARE @ubicacion INT
+
+  	SELECT @ubicacion = U.ubicacion_id
+		FROM [LOS_REZAGADOS].BI_dimension_ubicaciones U
+		WHERE U.localidad_descripcion = @localidad AND U.provincia_descripcion = @provincia
+
+    RETURN @ubicacion
+END
+GO
+
 -- ================= Carga datos =============================
 
 BEGIN TRANSACTION
@@ -297,22 +333,11 @@ SELECT DISTINCT MONTH(ticket_fecha_hora), [LOS_REZAGADOS].fn_GetCuatrimestre(tic
 FROM [LOS_REZAGADOS].Tickets_Venta
 GO
 
--- // WIP
--- INSERT INTO [LOS_REZAGADOS].[BI_dimension_ticket] ([ticket_id], [tiempo], [ticket_total_descuento], [ticket_total_ticket])
--- SELECT DISTINCT 
--- 	ticket_id, 
--- 	t.tiempo_id,
--- 	ticket_total_descuento,
--- 	ticket_total_ticket
--- FROM [LOS_REZAGADOS].[Tickets_Venta]
--- INNER JOIN [LOS_REZAGADOS].[BI_dimension_tiempos] t ON MONTH(ticket_fecha_hora) = t.mes AND YEAR(ticket_fecha_hora) = t.anio;
--- GO
-
 INSERT INTO [LOS_REZAGADOS].[BI_dimension_categorias](
   categoria_descripcion,
   subcategoria_descripcion
 )
-SELECT S.subcategoria_descripcion, C.categoria_descripcion
+SELECT C.categoria_descripcion, S.subcategoria_descripcion
 FROM [LOS_REZAGADOS].Subcategorias S
 JOIN [LOS_REZAGADOS].Categorias C ON S.categoria = C.categoria_id
 GO
@@ -360,8 +385,177 @@ FROM [LOS_REZAGADOS].Localidades L
 JOIN [LOS_REZAGADOS].Provincias P ON L.provincia = P.provincia_id
 GO
 
+INSERT INTO [LOS_REZAGADOS].[BI_hechos_pagos](
+  tiempo_id,
+  sucursal_id,
+  rango_cliente,
+  medios_de_pago_id,
+  detalle_cuotas,
+  ticket_id,
+  importe
+)
+SELECT
+  [LOS_REZAGADOS].fn_GetTiempoId(TV.ticket_fecha_hora),
+  C.sucursal,
+  [LOS_REZAGADOS].fn_GetRangoEdadId(Cl.cliente_fecha_nacimiento),
+  MP.medio_de_pago_id,
+  DP.detalle_cuotas,
+  TV.ticket_id,
+  TV.ticket_sub_total_productos
+FROM [LOS_REZAGADOS].Tickets_Venta TV
+LEFT JOIN [LOS_REZAGADOS].Cajas C ON TV.caja = C.caja_id
+LEFT JOIN [LOS_REZAGADOS].Envios E ON TV.ticket_id = E.ticket_id
+LEFT JOIN [LOS_REZAGADOS].Clientes Cl ON E.cliente = Cl.cliente_id
+LEFT JOIN [LOS_REZAGADOS].Pagos_Ventas PV ON TV.ticket_numero = PV.ticket_id
+LEFT JOIN [LOS_REZAGADOS].Medios_de_pago MP ON PV.medio_de_pago = MP.medio_de_pago_id
+LEFT JOIN [LOS_REZAGADOS].Detalles_pagos DP ON PV.detalle = DP.detalle_id
+GO
+
+-- Punto 11
+-- Con los datos proporcionados no hay solucion, todos los valores de CLIENTE_FECHA_NACIMIENTO relacionados a PAGO_TARJETA_CUOTAS son nulos
+-- SELECT DISTINCT PAGO_TARJETA_CUOTAS, CLIENTE_FECHA_NACIMIENTO FROM gd_esquema.Maestra
+-- WHERE PAGO_TARJETA_CUOTAS IS NOT NULL
+
+INSERT INTO [LOS_REZAGADOS].[BI_hechos_productos](
+  tiempo_id,
+  categoria_id,
+  producto_id,
+  promo_aplicada_descuento
+)
+SELECT
+  [LOS_REZAGADOS].fn_GetTiempoId(TV.ticket_fecha_hora),
+  [LOS_REZAGADOS].fn_GetCategoriaId(C.categoria_descripcion, SC.subcategoria_descripcion),
+  P.producto_id,
+  TVP.promo_aplicada_descuento
+FROM [LOS_REZAGADOS].Ticket_venta_x_producto TVP
+JOIN [LOS_REZAGADOS].Productos P ON TVP.producto = P.producto_id
+JOIN [LOS_REZAGADOS].Tickets_Venta TV ON TV.ticket_id = TVP.ticket_id
+JOIN [LOS_REZAGADOS].Subcategorias_x_producto SP ON P.producto_id = SP.producto_id
+JOIN [LOS_REZAGADOS].Subcategorias SC ON SP.subcategoria_id = SC.subcategoria_id
+JOIN [LOS_REZAGADOS].Categorias C ON SC.categoria = C.categoria_id
+GO
+
+INSERT INTO [LOS_REZAGADOS].[BI_hechos_ventas](
+  ubicacion_id,
+  tiempo_id,
+  rango_empleado,
+  turno_id,
+  ticket_nro,
+  caja_tipo,
+  ticket_sub_total,
+  producto,
+  ticket_detalle_cantidad,
+  descuentos
+)
+SELECT
+  [LOS_REZAGADOS].fn_GetUbicacionId(L.localidad_descripcion, P.provincia_descripcion),
+  [LOS_REZAGADOS].fn_GetTiempoId(TV.ticket_fecha_hora),
+  [LOS_REZAGADOS].fn_GetRangoEdadId(E.empleado_fecha_nacimiento),
+  [LOS_REZAGADOS].fn_GetTurnoId(TV.ticket_fecha_hora),
+  TV.ticket_numero,
+  C.caja_tipo,
+  TV.ticket_sub_total_productos,
+  Pd.producto_id,
+  TVP.ticket_det_cantidad,
+  TV.ticket_total_descuento + TV.ticket_total_descuento_aplicado AS descuentos
+FROM [LOS_REZAGADOS].Tickets_Venta TV
+JOIN [LOS_REZAGADOS].Cajas C ON TV.caja = C.caja_id
+JOIN [LOS_REZAGADOS].Sucursales S ON C.sucursal = S.sucursal_id
+JOIN [LOS_REZAGADOS].Localidades L ON S.sucursal_localidad = L.localidad_id
+JOIN [LOS_REZAGADOS].Provincias P ON L.provincia = P.provincia_id
+JOIN [LOS_REZAGADOS].Empleados E ON TV.empleado = E.empleado_id
+JOIN [LOS_REZAGADOS].Ticket_venta_x_producto TVP ON TV.ticket_id = TVP.ticket_id
+JOIN [LOS_REZAGADOS].Productos Pd ON TVP.producto = Pd.producto_id
+GO
+
+INSERT INTO [LOS_REZAGADOS].[BI_hechos_envios](
+  tiempo_id,
+  sucursal_id,
+  rango_cliente,
+  ubicacion_id,
+  envio,
+  estado_envio,
+  envio_fecha_programada,
+  envio_fecha_entrega,
+  costo
+)
+SELECT
+  [LOS_REZAGADOS].fn_GetTiempoId(TV.ticket_fecha_hora),
+  S.sucursal_id,
+  [LOS_REZAGADOS].fn_GetRangoEdadId(Cl.cliente_fecha_nacimiento),
+  [LOS_REZAGADOS].fn_GetUbicacionId(L.localidad_descripcion, P.provincia_descripcion),
+  E.envio_id,
+  Ee.estado_descripcion,
+  E.envio_fecha_programada,
+  E.envio_fecha_entrega,
+  E.envio_costo
+FROM [LOS_REZAGADOS].Envios E
+JOIN [LOS_REZAGADOS].Tickets_Venta TV ON TV.ticket_id = E.ticket_id
+JOIN [LOS_REZAGADOS].Cajas C ON TV.caja = C.caja_id
+JOIN [LOS_REZAGADOS].Sucursales S ON C.sucursal = S.sucursal_id
+JOIN [LOS_REZAGADOS].Localidades L ON S.sucursal_localidad = L.localidad_id
+JOIN [LOS_REZAGADOS].Provincias P ON L.provincia = P.provincia_id
+JOIN [LOS_REZAGADOS].Clientes Cl ON E.cliente = Cl.cliente_id
+LEFT JOIN [LOS_REZAGADOS].Estados_envios Ee ON E.estado = Ee.estado_id
+GO
+
 COMMIT
 GO
+
+-- hechos_ventas
+-- .tiempo (cuatrimestre, mes, año)
+-- .turno
+-- .rango_empleado
+-- .ubicacion
+
+-- .caja
+-- .ticket sub total (estrategia explicar es mas representativo) (1 , 5)
+-- .ticket_num (Count ticket 1)
+-- .sum productos (ticket detalle cant) Ticket_venta_x_producto
+-- (Count tickets 3)
+-- descuentos (suma ticket_total_descuento y ticket_total_descuento_aplicado)
+
+
+
+-- hechos_producto 6
+-- .tiempo (cuatrimestre)
+-- .producto
+-- .categoria
+-- .promocion (monto)
+
+
+
+-- hechos_envios 7
+-- .tiempo (mes, cuatrimestre, año)
+-- .ubicacion
+-- .sucursal
+-- .rango_cliente 8
+
+-- .envio_id
+-- .estado_envio
+-- .envio_fecha_programado
+-- .envio_fecha_entrega
+-- Count (envio id)
+-- .envio_costo
+
+
+
+
+-- hechos_pagos 10
+-- .tiempo (mes, año)
+-- .cuotas
+-- .sucursal
+-- .venta?(ticket_id)
+-- .importe (pagos_ventas)
+-- .rango_cliente
+-- v_ 12
+
+
+
+
+
+-- INSERT INTO [LOS_REZAGADOS].[BI_hechos_ventas]
+-- INSERT INTO [LOS_REZAGADOS].[BI_hechos_envios]
 
 -- ================= Vistas =============================
 
@@ -400,7 +594,7 @@ GO
 --     rango_descripcion, 
 --     COUNT(nro_envio) AS cantidad_env�os
 -- FROM LOS_REZAGADOS.hechos_env�os
--- JOIN BI_dimension_rangos ON hechos_env�os.rango_id = BI_dimension_rangos.id_rango_etario
+-- JOIN BI_dimension_rangos_edades ON hechos_env�os.rango_id = BI_dimension_rangos_edades.id_rango_etario
 -- JOIN BI_dimension_tiempos ON hechos_env�os.tiempo_id = BI_dimension_tiempos.tiempo_id
 -- GROUP BY anio, cuatrimestre, rango_descripcion;
 -- GO
@@ -426,6 +620,6 @@ GO
 --     AVG(importe_pago / n�mero_cuotas) AS promedio_importe_cuota
 -- FROM LOS_REZAGADOS.hechos_pagos
 -- JOIN BI_hechos_ventas ON hechos_pagos.id_venta = BI_hechos_ventas.id_venta
--- JOIN BI_dimension_rangos ON BI_hechos_ventas.rango_cliente = BI_dimension_rangos.id_rango_etario
+-- JOIN BI_dimension_rangos_edades ON BI_hechos_ventas.rango_cliente = BI_dimension_rangos_edades.id_rango_etario
 -- GROUP BY rango_descripcion;
 -- GO
