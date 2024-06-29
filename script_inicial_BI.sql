@@ -31,6 +31,11 @@ GO
 DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetRangoEdadId;
 DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetTurnoId;
 
+-- Borrado de vistas si existen en caso que el schema exista
+
+IF OBJECT_ID('LOS_REZAGADOS.v_porcentaje_descuento_aplicados') IS NOT NULL
+  DROP VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados
+
 -- Borrado de tablas si existen en caso que el schema exista
 
 IF OBJECT_ID('LOS_REZAGADOS.BI_hechos_descuentos','U') IS NOT NULL
@@ -53,6 +58,8 @@ IF OBJECT_ID('LOS_REZAGADOS.BI_dimension_turnos','U') IS NOT NULL
   DROP TABLE [LOS_REZAGADOS].BI_dimension_turnos;
 IF OBJECT_ID('LOS_REZAGADOS.BI_dimension_sucursales','U') IS NOT NULL
   DROP TABLE [LOS_REZAGADOS].BI_dimension_sucursales;
+IF OBJECT_ID('LOS_REZAGADOS.BI_dimension_ticket','U') IS NOT NULL
+  DROP TABLE [LOS_REZAGADOS].BI_dimension_ticket;
 
 -- Creacion de tablas
 BEGIN TRANSACTION
@@ -67,6 +74,21 @@ CREATE TABLE [LOS_REZAGADOS].[BI_dimension_tiempos]
   cuatrimestre INT,
   anio INT
 )
+
+IF NOT EXISTS(SELECT [name]
+FROM sys.tables
+WHERE [name] = 'BI_dimension_ticket')
+CREATE TABLE [LOS_REZAGADOS].[BI_dimension_ticket]
+(
+  ticket_id INT PRIMARY KEY,
+  tiempo INT NOT NULL,
+  ticket_total_descuento DECIMAL(18, 2),
+  ticket_total_ticket DECIMAL(18, 2)
+)
+
+ALTER TABLE [LOS_REZAGADOS].[BI_dimension_ticket]
+ADD FOREIGN KEY (tiempo) REFERENCES [LOS_REZAGADOS].BI_dimension_tiempos(tiempo_id);
+
 
 IF NOT EXISTS(SELECT [name]
 FROM sys.tables
@@ -240,6 +262,16 @@ INSERT INTO [LOS_REZAGADOS].[BI_dimension_tiempos](
 SELECT DISTINCT MONTH(ticket_fecha_hora), DATEPART(QUARTER, ticket_fecha_hora), YEAR(ticket_fecha_hora)
 FROM [LOS_REZAGADOS].Tickets_Venta
 
+INSERT INTO [LOS_REZAGADOS].[BI_dimension_ticket] ([ticket_id], [tiempo], [ticket_total_descuento], [ticket_total_ticket])
+SELECT DISTINCT 
+	ticket_id, 
+	t.tiempo_id,
+	ticket_total_descuento,
+	ticket_total_ticket
+FROM [LOS_REZAGADOS].[Tickets_Venta]
+INNER JOIN [LOS_REZAGADOS].[BI_dimension_tiempos] t ON MONTH(ticket_fecha_hora) = t.mes AND YEAR(ticket_fecha_hora) = t.anio;
+GO
+
 INSERT INTO [LOS_REZAGADOS].[BI_dimension_categorias](
   categoria_descripcion,
   subcategoria_descripcion
@@ -287,10 +319,23 @@ INSERT INTO [LOS_REZAGADOS].[BI_dimension_ubicaciones](
 SELECT L.localidad_descripcion, P.provincia_descripcion
 FROM [LOS_REZAGADOS].Localidades L
 JOIN [LOS_REZAGADOS].Provincias P ON L.provincia = P.provincia_id
-
+GO
 -- ================= Vistas =============================
 
 
+-- Punto 5
+
+CREATE VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados AS
+SELECT 
+    t.anio AS Anio,
+    t.mes AS Mes,
+    SUM(ticket_total_descuento) AS TotalDescuentos,
+    SUM(ticket_total_ticket) AS TotalTickets,
+    (SUM(ticket_total_descuento) / SUM(ticket_total_ticket)) * 100 AS PorcentajeDescuento
+FROM [LOS_REZAGADOS].BI_dimension_ticket
+INNER JOIN [LOS_REZAGADOS].BI_dimension_tiempos t on t.tiempo_id = tiempo
+GROUP BY t.anio, t.mes;
+GO
 --Punto 9
 
 CREATE VIEW Top_5_Localidades_Mayor_Costo_Envio 
