@@ -290,3 +290,18 @@ FROM [LOS_REZAGADOS].Localidades L
 JOIN [LOS_REZAGADOS].Provincias P ON L.provincia = P.provincia_id
 
 -- ================= Vistas =============================
+
+
+--Punto 9
+
+CREATE VIEW Top_5_Localidades_Mayor_Costo_Envio 
+AS
+SELECT TOP 5
+    c.cliente_id,
+    SUM(e.envio_costo) AS total_costo_envio
+FROM LOS_REZAGADOS.Clientes c
+JOIN LOS_REZAGADOS.Envios e
+	ON c.cliente_id = e.cliente
+GROUP BY c.cliente_id
+ORDER BY total_costo_envio DESC
+GO
