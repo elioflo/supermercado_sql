@@ -104,8 +104,7 @@ WHERE [name] = 'BI_dimension_turnos')
 CREATE TABLE [LOS_REZAGADOS].[BI_dimension_turnos]
 (
   turno_id INT IDENTITY(1,1) PRIMARY KEY,
-  hora_inicio INT,
-  hora_fin INT,
+  descripcion NVARCHAR (255)
 )
 
 IF NOT EXISTS(SELECT [name]
@@ -217,15 +216,19 @@ BEGIN
   IF @hora BETWEEN 8 AND 12
 		SELECT @turno_id = turno_id
   FROM [LOS_REZAGADOS].BI_dimension_turnos AS T
-  WHERE T.hora_inicio = 8
+  WHERE T.descripcion = '08:00 - 12:00'
 	ELSE IF @hora BETWEEN 12 AND 16
 		SELECT @turno_id = turno_id
   FROM [LOS_REZAGADOS].BI_dimension_turnos AS T
-  WHERE T.hora_inicio = 12
+  WHERE T.descripcion = '12:00 - 16:00'
+	ELSE IF @hora BETWEEN 16 AND 20
+		SELECT @turno_id = turno_id
+  FROM [LOS_REZAGADOS].BI_dimension_turnos AS T
+  WHERE T.descripcion = '16:00 - 20:00'
 	ELSE
 		SELECT @turno_id = turno_id
   FROM [LOS_REZAGADOS].BI_dimension_turnos AS T
-  WHERE T.hora_inicio = 16
+  WHERE T.descripcion = 'Otros'
   RETURN @turno_id;
 END
 GO
@@ -254,7 +257,7 @@ INSERT [LOS_REZAGADOS].[BI_dimension_medios_de_pago](
 )
 SELECT M.descripcion, T.tipo_descripcion
 FROM [LOS_REZAGADOS].Medios_de_pago M
-JOIN [LOS_REZAGADOS].Tipos_medio_pago T ON M.tipo_id = T.tipo_descripcion
+JOIN [LOS_REZAGADOS].Tipos_medio_pago T ON M.tipo_id = T.tipo_id
 
 INSERT INTO [LOS_REZAGADOS].[BI_dimension_sucursales](
   supermercado,
@@ -264,14 +267,12 @@ SELECT Sup.supermercado_nombre, Suc.sucursal_nombre
 FROM [LOS_REZAGADOS].Sucursales Suc
 JOIN [LOS_REZAGADOS].Supermercados Sup ON Suc.supermercado = Sup.supermercado_id
 
-INSERT INTO [LOS_REZAGADOS].[BI_dimension_turnos](
-  hora_inicio,
-  hora_fin
-)
+INSERT INTO [LOS_REZAGADOS].[BI_dimension_turnos](descripcion)
 VALUES
-  (8, 12),
-  (12, 16),
-  (16, 20)
+  ('08:00 - 12:00'),
+  ('12:00 - 16:00'),
+  ('16:00 - 20:00'),
+  ('Otros')
 
 INSERT INTO [LOS_REZAGADOS].[BI_dimension_rangos_edades](rango_descripcion)
 VALUES

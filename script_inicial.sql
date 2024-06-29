@@ -328,7 +328,6 @@ CREATE TABLE [LOS_REZAGADOS].[Marcas]
   marca_descripcion NVARCHAR(255),
 )
 
-
 IF NOT EXISTS(SELECT [name]
 FROM sys.tables
 WHERE [name] = 'Productos')
@@ -369,7 +368,6 @@ CREATE TABLE [LOS_REZAGADOS].[Reglas]
   regla_aplica_misma_marca DECIMAL (18, 0),
   regla_aplica_mismo_prod DECIMAL (18, 0),
 )
-
 
 IF NOT EXISTS(SELECT [name]
 FROM sys.tables
@@ -867,7 +865,6 @@ INNER JOIN [LOS_REZAGADOS].Productos p
   AND p.producto_nombre = dato.PRODUCTO_NOMBRE
   AND p.producto_precio_unitario = dato.PRODUCTO_PRECIO
   AND p.producto_marca = m.marca_id
-WHERE tv.ticket_id = 22
 GO
 
 INSERT INTO [LOS_REZAGADOS].[Envios]
@@ -944,4 +941,7 @@ INNER JOIN [LOS_REZAGADOS].Ticket_venta_x_producto tvp
   ON tvp.promo_aplicada_descuento = dato.PROMO_APLICADA_DESCUENTO
   AND tvp.ticket_det_total = dato.TICKET_DET_TOTAL
   AND tvp.ticket_det_precio = dato.TICKET_DET_PRECIO
+GO
+
+COMMIT
 GO
