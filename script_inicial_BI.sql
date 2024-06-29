@@ -33,6 +33,11 @@ DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetTurnoId;
 DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetCuatrimestre;
 DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetTiempoId;
 
+-- Borrado de vistas si existen en caso que el schema exista
+
+IF OBJECT_ID('LOS_REZAGADOS.v_porcentaje_descuento_aplicados') IS NOT NULL
+  DROP VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados
+
 -- Borrado de tablas si existen en caso que el schema exista
 
 IF OBJECT_ID('LOS_REZAGADOS.BI_hechos_descuentos','U') IS NOT NULL
@@ -69,6 +74,22 @@ CREATE TABLE [LOS_REZAGADOS].[BI_dimension_tiempos]
   cuatrimestre INT,
   anio INT
 )
+
+-- // WIP
+-- IF NOT EXISTS(SELECT [name]
+-- FROM sys.tables
+-- WHERE [name] = 'BI_dimension_ticket')
+-- CREATE TABLE [LOS_REZAGADOS].[BI_dimension_ticket]
+-- (
+--   ticket_id INT PRIMARY KEY,
+--   tiempo INT NOT NULL,
+--   ticket_total_descuento DECIMAL(18, 2),
+--   ticket_total_ticket DECIMAL(18, 2)
+-- )
+
+-- ALTER TABLE [LOS_REZAGADOS].[BI_dimension_ticket]
+-- ADD FOREIGN KEY (tiempo) REFERENCES [LOS_REZAGADOS].BI_dimension_tiempos(tiempo_id);
+
 
 IF NOT EXISTS(SELECT [name]
 FROM sys.tables
@@ -168,7 +189,10 @@ CREATE TABLE [LOS_REZAGADOS].[BI_hechos_ventas]
   rango_empleado INT,
   rango_cliente INT,
   turno_id INT,
+  ticket_id DECIMAL (18, 2),
   caja_tipo INT,
+  ticket_total_descuento DECIMAL(18, 2),
+  ticket_total_ticket DECIMAL(18, 2),
   PRIMARY KEY(ubicacion_id, tiempo_id, rango_empleado, rango_cliente, turno_id),
   FOREIGN KEY(ubicacion_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_ubicaciones],
   FOREIGN KEY(tiempo_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_tiempos],
@@ -273,6 +297,17 @@ SELECT DISTINCT MONTH(ticket_fecha_hora), [LOS_REZAGADOS].fn_GetCuatrimestre(tic
 FROM [LOS_REZAGADOS].Tickets_Venta
 GO
 
+-- // WIP
+-- INSERT INTO [LOS_REZAGADOS].[BI_dimension_ticket] ([ticket_id], [tiempo], [ticket_total_descuento], [ticket_total_ticket])
+-- SELECT DISTINCT 
+-- 	ticket_id, 
+-- 	t.tiempo_id,
+-- 	ticket_total_descuento,
+-- 	ticket_total_ticket
+-- FROM [LOS_REZAGADOS].[Tickets_Venta]
+-- INNER JOIN [LOS_REZAGADOS].[BI_dimension_tiempos] t ON MONTH(ticket_fecha_hora) = t.mes AND YEAR(ticket_fecha_hora) = t.anio;
+-- GO
+
 INSERT INTO [LOS_REZAGADOS].[BI_dimension_categorias](
   categoria_descripcion,
   subcategoria_descripcion
@@ -330,20 +365,34 @@ GO
 
 -- ================= Vistas =============================
 
-
--- --1
+-- --Punto 1
 -- CREATE VIEW vista_promedio_ventas AS
 -- SELECT 
 --     localidad_descripcion, 
 --     anio, 
 --     mes, 
 --     AVG(importe_venta) AS promedio_venta
--- FROM LOS_REZAGADOS.BI_hechos_ventas
+-- FROM [LOS_REZAGADOS].BI_hechos_ventas
 -- JOIN BI_dimension_ubicaciones ON BI_hechos_ventas.ubicacion_id = BI_dimension_ubicaciones.ubicacion_id
 -- JOIN BI_dimension_tiempos ON BI_hechos_ventas.tiempo_id = BI_dimension_tiempos.tiempo_id
 -- GROUP BY localidad_descripcion, anio, mes;
 -- GO
--- --8
+
+-- Punto 5
+
+-- CREATE VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados AS
+-- SELECT 
+--     t.anio AS Anio,
+--     t.mes AS Mes,
+--     SUM(ticket_total_descuento) AS TotalDescuentos,
+--     SUM(ticket_total_ticket) AS TotalTickets,
+--     (SUM(ticket_total_descuento) / SUM(ticket_total_ticket)) * 100 AS PorcentajeDescuento
+-- FROM [LOS_REZAGADOS].BI_dimension_ticket
+-- INNER JOIN [LOS_REZAGADOS].BI_dimension_tiempos t on t.tiempo_id = tiempo
+-- GROUP BY t.anio, t.mes;
+-- GO
+
+-- --Punto 8
 -- CREATE VIEW cant_envios_x_edad AS
 -- SELECT 
 --     anio, 
@@ -354,17 +403,6 @@ GO
 -- JOIN BI_dimension_rangos ON hechos_env�os.rango_id = BI_dimension_rangos.id_rango_etario
 -- JOIN BI_dimension_tiempos ON hechos_env�os.tiempo_id = BI_dimension_tiempos.tiempo_id
 -- GROUP BY anio, cuatrimestre, rango_descripcion;
--- GO
-
--- --11
--- CREATE VIEW promedio_cuota_x_edad AS
--- SELECT 
---     rango_descripcion, 
---     AVG(importe_pago / n�mero_cuotas) AS promedio_importe_cuota
--- FROM LOS_REZAGADOS.hechos_pagos
--- JOIN BI_hechos_ventas ON hechos_pagos.id_venta = BI_hechos_ventas.id_venta
--- JOIN BI_dimension_rangos ON BI_hechos_ventas.rango_cliente = BI_dimension_rangos.id_rango_etario
--- GROUP BY rango_descripcion;
 -- GO
 
 -- --Punto 9
@@ -379,4 +417,15 @@ GO
 -- 	ON c.cliente_id = e.cliente
 -- GROUP BY c.cliente_id
 -- ORDER BY total_costo_envio DESC
+-- GO
+
+-- --Punto 11
+-- CREATE VIEW promedio_cuota_x_edad AS
+-- SELECT 
+--     rango_descripcion, 
+--     AVG(importe_pago / n�mero_cuotas) AS promedio_importe_cuota
+-- FROM LOS_REZAGADOS.hechos_pagos
+-- JOIN BI_hechos_ventas ON hechos_pagos.id_venta = BI_hechos_ventas.id_venta
+-- JOIN BI_dimension_rangos ON BI_hechos_ventas.rango_cliente = BI_dimension_rangos.id_rango_etario
+-- GROUP BY rango_descripcion;
 -- GO
