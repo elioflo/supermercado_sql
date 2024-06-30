@@ -229,7 +229,8 @@ CREATE TABLE [LOS_REZAGADOS].[BI_hechos_ventas]
   ticket_sub_total DECIMAL(18, 2),
   producto DECIMAL(18, 2),
   ticket_detalle_cantidad DECIMAL(10, 0),
-  descuentos DECIMAL(18, 2)
+  ticket_total_descuento_promociones DECIMAL(18, 2),
+  ticket_total_descuento_medio_pago DECIMAL(18, 2)
   FOREIGN KEY(ubicacion_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_ubicaciones],
   FOREIGN KEY(tiempo_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_tiempos],
   FOREIGN KEY(turno_id) REFERENCES [LOS_REZAGADOS].[BI_dimension_turnos],
@@ -435,7 +436,7 @@ SELECT
   MP.medio_de_pago_id,
   DP.detalle_cuotas,
   TV.ticket_id,
-  TV.ticket_sub_total_productos
+  PV.pago_importe
 FROM [LOS_REZAGADOS].Tickets_Venta TV
 LEFT JOIN [LOS_REZAGADOS].Cajas C ON TV.caja = C.caja_id
 LEFT JOIN [LOS_REZAGADOS].Envios E ON TV.ticket_id = E.ticket_id
@@ -474,19 +475,21 @@ INSERT INTO [LOS_REZAGADOS].[BI_hechos_ventas](
   ticket_sub_total,
   producto,
   ticket_detalle_cantidad,
-  descuentos
+  ticket_total_descuento_promociones,
+  ticket_total_descuento_medio_pago
 )
 SELECT
   [LOS_REZAGADOS].fn_GetUbicacionId(L.localidad_descripcion, P.provincia_descripcion),
   [LOS_REZAGADOS].fn_GetTiempoId(TV.ticket_fecha_hora),
   [LOS_REZAGADOS].fn_GetRangoEdadId(E.empleado_fecha_nacimiento),
   [LOS_REZAGADOS].fn_GetTurnoId(TV.ticket_fecha_hora),
-  TV.ticket_numero,
+  TV.ticket_id,
   C.caja_tipo,
   TV.ticket_sub_total_productos,
   Pd.producto_id,
   TVP.ticket_det_cantidad,
-  TV.ticket_total_descuento + TV.ticket_total_descuento_aplicado AS descuentos
+  TV.ticket_total_descuento,
+  TV.ticket_total_descuento_aplicado
 FROM [LOS_REZAGADOS].Tickets_Venta TV
 JOIN [LOS_REZAGADOS].Cajas C ON TV.caja = C.caja_id
 JOIN [LOS_REZAGADOS].Sucursales S ON C.sucursal = S.sucursal_id
@@ -599,12 +602,12 @@ GO
 -- Punto 5
 
 CREATE VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados AS
-SELECT 
+SELECT
   t.anio AS Anio,
   t.mes AS Mes,
-  SUM(hv.descuentos) AS TotalDescuentos,
+  SUM(hv.ticket_total_descuento_promociones + hv.ticket_total_descuento_medio_pago) AS TotalDescuentos,
   SUM(hv.ticket_sub_total) AS TotalTickets,
-  TRY_CAST((SUM(hv.descuentos) / SUM(hv.ticket_sub_total)) * 100 AS DECIMAL(18,2)) AS PorcentajeDescuento
+  TRY_CAST((SUM(hv.ticket_total_descuento_promociones + hv.ticket_total_descuento_medio_pago) / SUM(hv.ticket_sub_total)) * 100 AS DECIMAL(18,2)) AS PorcentajeDescuento
 FROM [LOS_REZAGADOS].BI_hechos_ventas hv
 INNER JOIN [LOS_REZAGADOS].BI_dimension_tiempos t on t.tiempo_id = hv.tiempo_id
 GROUP BY t.anio, t.mes;
@@ -687,7 +690,7 @@ GO
 
 CREATE VIEW [LOS_REZAGADOS].v_promedio_cuota_x_edad AS
 SELECT rango_descripcion,
-COALESCE(CONVERT(VARCHAR(255), AVG(importe / detalle_cuotas)), 'No hay cuotas registradas') AS promedio_importe_cuota
+    COALESCE(CONVERT(VARCHAR(255), AVG(importe / detalle_cuotas)), 'No hay cuotas registradas') AS promedio_importe_cuota
 FROM [LOS_REZAGADOS].BI_hechos_pagos
 JOIN [LOS_REZAGADOS].BI_dimension_rangos_edades ON BI_hechos_pagos.rango_cliente = BI_dimension_rangos_edades.rango_id
 GROUP BY rango_descripcion;
@@ -699,10 +702,11 @@ CREATE VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados_por_medio_pago AS
 SELECT
     DP.tipo_descripcion AS Medio_de_Pago,
     DT.cuatrimestre,
-    SUM(HP.importe) AS Total_Pagos_Sin_Descuento,
-    SUM(HP.importe - HP.importe * (1 - HP.detalle_cuotas / 100)) AS Total_Descuentos_Aplicados,
-    SUM(HP.importe - HP.importe * (1 - HP.detalle_cuotas / 100)) / SUM(HP.importe) * 100 AS Porcentaje_Descuento_Aplicado
+    SUM(HV.ticket_sub_total) AS Total_Pagos_Sin_Descuento,
+    SUM(HV.ticket_total_descuento_medio_pago) AS Total_Descuentos_Aplicados,
+    (SUM(HV.ticket_total_descuento_medio_pago)/SUM(HV.ticket_sub_total)) * 100 AS Porcentaje_Descuento_Aplicado
 FROM [LOS_REZAGADOS].BI_hechos_pagos HP
+JOIN [LOS_REZAGADOS].BI_hechos_ventas HV ON HP.ticket_id = HV.ticket_nro
 JOIN [LOS_REZAGADOS].BI_dimension_tiempos DT ON HP.tiempo_id = DT.tiempo_id
 JOIN [LOS_REZAGADOS].BI_dimension_medios_de_pago DP ON HP.medios_de_pago_id = DP.medios_de_pago_id
 GROUP BY DP.tipo_descripcion, DT.cuatrimestre;
