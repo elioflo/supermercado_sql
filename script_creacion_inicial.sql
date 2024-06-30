@@ -944,7 +944,7 @@ INNER JOIN [LOS_REZAGADOS].Ticket_venta_x_producto tvp
 GO
 
 INSERT INTO [LOS_REZAGADOS].[Subcategorias_x_producto]
-([subcategoria_id], [producto_id])
+([producto_id],[subcategoria_id])
 SELECT DISTINCT
   s.subcategoria_id,
   p.producto_id
