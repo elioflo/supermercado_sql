@@ -39,6 +39,12 @@ DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetUbicacionId;
 
 IF OBJECT_ID('LOS_REZAGADOS.v_porcentaje_descuento_aplicados') IS NOT NULL
   DROP VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados
+IF OBJECT_ID('LOS_REZAGADOS.v_cantidad_unidades_promedio') IS NOT NULL
+  DROP VIEW [LOS_REZAGADOS].v_cantidad_unidades_promedio
+IF OBJECT_ID('LOS_REZAGADOS.v_porcentaje_anual_ventas') IS NOT NULL
+  DROP VIEW [LOS_REZAGADOS].v_porcentaje_anual_ventas
+IF OBJECT_ID('LOS_REZAGADOS.v_cantidad_ventas_x_turno') IS NOT NULL
+  DROP VIEW [LOS_REZAGADOS].v_cantidad_ventas_x_turno
 
 -- Borrado de tablas si existen en caso que el schema exista
 
@@ -411,11 +417,6 @@ LEFT JOIN [LOS_REZAGADOS].Medios_de_pago MP ON PV.medio_de_pago = MP.medio_de_pa
 LEFT JOIN [LOS_REZAGADOS].Detalles_pagos DP ON PV.detalle = DP.detalle_id
 GO
 
--- Punto 11
--- Con los datos proporcionados no hay solucion, todos los valores de CLIENTE_FECHA_NACIMIENTO relacionados a PAGO_TARJETA_CUOTAS son nulos
--- SELECT DISTINCT PAGO_TARJETA_CUOTAS, CLIENTE_FECHA_NACIMIENTO FROM gd_esquema.Maestra
--- WHERE PAGO_TARJETA_CUOTAS IS NOT NULL
-
 INSERT INTO [LOS_REZAGADOS].[BI_hechos_productos](
   tiempo_id,
   categoria_id,
@@ -479,7 +480,7 @@ INSERT INTO [LOS_REZAGADOS].[BI_hechos_envios](
   envio_fecha_entrega,
   costo
 )
-SELECT
+SELECT DISTINCT
   [LOS_REZAGADOS].fn_GetTiempoId(TV.ticket_fecha_hora),
   S.sucursal_id,
   [LOS_REZAGADOS].fn_GetRangoEdadId(Cl.cliente_fecha_nacimiento),
@@ -490,136 +491,66 @@ SELECT
   E.envio_fecha_entrega,
   E.envio_costo
 FROM [LOS_REZAGADOS].Envios E
-JOIN [LOS_REZAGADOS].Tickets_Venta TV ON TV.ticket_id = E.ticket_id
+LEFT JOIN [LOS_REZAGADOS].Tickets_Venta TV ON TV.ticket_id = E.ticket_id
 JOIN [LOS_REZAGADOS].Cajas C ON TV.caja = C.caja_id
 JOIN [LOS_REZAGADOS].Sucursales S ON C.sucursal = S.sucursal_id
-JOIN [LOS_REZAGADOS].Localidades L ON S.sucursal_localidad = L.localidad_id
-JOIN [LOS_REZAGADOS].Provincias P ON L.provincia = P.provincia_id
 JOIN [LOS_REZAGADOS].Clientes Cl ON E.cliente = Cl.cliente_id
+JOIN [LOS_REZAGADOS].Localidades L ON Cl.cliente_localidad = L.localidad_id
+JOIN [LOS_REZAGADOS].Provincias P ON L.provincia = P.provincia_id
 LEFT JOIN [LOS_REZAGADOS].Estados_envios Ee ON E.estado = Ee.estado_id
 GO
 
 COMMIT
 GO
 
--- hechos_ventas
--- .tiempo (cuatrimestre, mes, año)
--- .turno
--- .rango_empleado
--- .ubicacion
-
--- .caja
--- .ticket sub total (estrategia explicar es mas representativo) (1 , 5)
--- .ticket_num (Count ticket 1)
--- .sum productos (ticket detalle cant) Ticket_venta_x_producto
--- (Count tickets 3)
--- descuentos (suma ticket_total_descuento y ticket_total_descuento_aplicado)
-
-
-
--- hechos_producto 6
--- .tiempo (cuatrimestre)
--- .producto
--- .categoria
--- .promocion (monto)
-
-
-
--- hechos_envios 7
--- .tiempo (mes, cuatrimestre, año)
--- .ubicacion
--- .sucursal
--- .rango_cliente 8
-
--- .envio_id
--- .estado_envio
--- .envio_fecha_programado
--- .envio_fecha_entrega
--- Count (envio id)
--- .envio_costo
-
-
-
-
--- hechos_pagos 10
--- .tiempo (mes, año)
--- .cuotas
--- .sucursal
--- .venta?(ticket_id)
--- .importe (pagos_ventas)
--- .rango_cliente
--- v_ 12
-
-
-
-
-
--- INSERT INTO [LOS_REZAGADOS].[BI_hechos_ventas]
--- INSERT INTO [LOS_REZAGADOS].[BI_hechos_envios]
-
 -- ================= Vistas =============================
 
--- --Punto 1
--- CREATE VIEW vista_promedio_ventas AS
--- SELECT 
---     localidad_descripcion, 
---     anio, 
---     mes, 
---     AVG(importe_venta) AS promedio_venta
--- FROM [LOS_REZAGADOS].BI_hechos_ventas
--- JOIN BI_dimension_ubicaciones ON BI_hechos_ventas.ubicacion_id = BI_dimension_ubicaciones.ubicacion_id
--- JOIN BI_dimension_tiempos ON BI_hechos_ventas.tiempo_id = BI_dimension_tiempos.tiempo_id
--- GROUP BY localidad_descripcion, anio, mes;
--- GO
+-- Punto 2
+-- Cantidad unidades promedio de articulos segun el turno para cada cuatrimestre
+CREATE VIEW [LOS_REZAGADOS].v_cantidad_unidades_promedio AS
+SELECT
+    T.descripcion AS turno,
+    Ti.cuatrimestre AS cuatrimestre,
+    Ti.anio AS anio,
+    SUM(ticket_detalle_cantidad) / COUNT(ticket_nro) AS unidades_promedio
+FROM [LOS_REZAGADOS].BI_hechos_ventas V
+LEFT JOIN [LOS_REZAGADOS].BI_dimension_turnos T ON V.turno_id = T.turno_id
+LEFT JOIN [LOS_REZAGADOS].BI_dimension_tiempos Ti ON V.tiempo_id = Ti.tiempo_id
+GROUP BY T.descripcion, Ti.cuatrimestre, Ti.anio
+GO
 
--- Punto 5
+-- Punto 3
+-- Procentaje anual de ventas por rango etario del empleado por tipo de caja por cuatrimestre
+CREATE VIEW [LOS_REZAGADOS].v_porcentaje_anual_ventas AS
+SELECT
+    Ti.anio,
+    Ti.cuatrimestre,
+    V.rango_empleado AS rango_etario_empleado,
+    V.caja_tipo,
+    (COUNT(DISTINCT V.ticket_nro) * 1.0) / (
+      SELECT COUNT(DISTINCT ticket_nro)
+      FROM [LOS_REZAGADOS].BI_hechos_ventas V2
+      LEFT JOIN [LOS_REZAGADOS].BI_dimension_tiempos T2 ON V2.tiempo_id = T2.tiempo_id
+      WHERE T2.anio = Ti.anio
+    ) AS porcentaje_anual_ventas
+FROM [LOS_REZAGADOS].BI_hechos_ventas V
+LEFT JOIN [LOS_REZAGADOS].BI_dimension_turnos T ON V.turno_id = T.turno_id
+LEFT JOIN [LOS_REZAGADOS].BI_dimension_tiempos Ti ON V.tiempo_id = Ti.tiempo_id
+GROUP BY V.rango_empleado, V.caja_tipo, Ti.cuatrimestre, Ti.anio
+GO
 
--- CREATE VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados AS
--- SELECT 
---     t.anio AS Anio,
---     t.mes AS Mes,
---     SUM(ticket_total_descuento) AS TotalDescuentos,
---     SUM(ticket_total_ticket) AS TotalTickets,
---     (SUM(ticket_total_descuento) / SUM(ticket_total_ticket)) * 100 AS PorcentajeDescuento
--- FROM [LOS_REZAGADOS].BI_dimension_ticket
--- INNER JOIN [LOS_REZAGADOS].BI_dimension_tiempos t on t.tiempo_id = tiempo
--- GROUP BY t.anio, t.mes;
--- GO
-
--- --Punto 8
--- CREATE VIEW cant_envios_x_edad AS
--- SELECT 
---     anio, 
---     cuatrimestre, 
---     rango_descripcion, 
---     COUNT(nro_envio) AS cantidad_env�os
--- FROM LOS_REZAGADOS.hechos_env�os
--- JOIN BI_dimension_rangos_edades ON hechos_env�os.rango_id = BI_dimension_rangos_edades.id_rango_etario
--- JOIN BI_dimension_tiempos ON hechos_env�os.tiempo_id = BI_dimension_tiempos.tiempo_id
--- GROUP BY anio, cuatrimestre, rango_descripcion;
--- GO
-
--- --Punto 9
-
--- CREATE VIEW [LOS_REZAGADOS].top_5_Localidades_Mayor_Costo_Envio 
--- AS
--- SELECT TOP 5
---     c.cliente_id,
---     SUM(e.envio_costo) AS total_costo_envio
--- FROM [LOS_REZAGADOS].Clientes c
--- JOIN [LOS_REZAGADOS].Envios e
--- 	ON c.cliente_id = e.cliente
--- GROUP BY c.cliente_id
--- ORDER BY total_costo_envio DESC
--- GO
-
--- --Punto 11
--- CREATE VIEW promedio_cuota_x_edad AS
--- SELECT 
---     rango_descripcion, 
---     AVG(importe_pago / n�mero_cuotas) AS promedio_importe_cuota
--- FROM LOS_REZAGADOS.hechos_pagos
--- JOIN BI_hechos_ventas ON hechos_pagos.id_venta = BI_hechos_ventas.id_venta
--- JOIN BI_dimension_rangos_edades ON BI_hechos_ventas.rango_cliente = BI_dimension_rangos_edades.id_rango_etario
--- GROUP BY rango_descripcion;
--- GO
+-- Punto 4
+-- Cantidad ventas por turno por localidad segun el mes
+CREATE VIEW [LOS_REZAGADOS].v_cantidad_ventas_x_turno AS
+SELECT
+    Ti.anio,
+    Ti.mes,
+    T.descripcion AS turno,
+    U.localidad_descripcion AS localidad,
+    COUNT(DISTINCT V.ticket_nro) AS ventas
+FROM [LOS_REZAGADOS].BI_hechos_ventas V
+JOIN [LOS_REZAGADOS].BI_dimension_turnos T ON V.turno_id = T.turno_id
+JOIN [LOS_REZAGADOS].BI_dimension_ubicaciones U ON V.ubicacion_id = U.ubicacion_id
+JOIN [LOS_REZAGADOS].BI_dimension_tiempos Ti ON V.tiempo_id = Ti.tiempo_id
+GROUP BY Ti.anio, Ti.mes, T.descripcion, U.localidad_descripcion
+GO
