@@ -671,17 +671,19 @@ GO
 
 -- --Punto 9
 
--- CREATE VIEW [LOS_REZAGADOS].top_5_Localidades_Mayor_Costo_Envio 
--- AS
--- SELECT TOP 5
---     c.cliente_id,
---     SUM(e.envio_costo) AS total_costo_envio
--- FROM [LOS_REZAGADOS].Clientes c
--- JOIN [LOS_REZAGADOS].Envios e
--- 	ON c.cliente_id = e.cliente
--- GROUP BY c.cliente_id
--- ORDER BY total_costo_envio DESC
--- GO
+CREATE VIEW [LOS_REZAGADOS].v_top5_localidades_costo_envio AS
+SELECT TOP 5
+    DU.localidad_descripcion,
+    SUM(HE.costo) AS total_costo_envio
+FROM 
+    [LOS_REZAGADOS].BI_hechos_envios HE
+JOIN 
+    [LOS_REZAGADOS].BI_dimension_ubicaciones DU ON HE.ubicacion_id = DU.ubicacion_id
+GROUP BY 
+    DU.localidad_descripcion
+ORDER BY 
+    total_costo_envio DESC
+GO
 
 -- --Punto 11
  CREATE VIEW [LOS_REZAGADOS].v_promedio_cuota_x_edad AS
@@ -692,3 +694,20 @@ GO
  JOIN [LOS_REZAGADOS].BI_dimension_rangos_edades ON BI_hechos_pagos.rango_cliente = BI_dimension_rangos_edades.rango_id
  GROUP BY rango_descripcion;
  GO
+
+--Punto 12
+
+-- Crear la vista
+CREATE VIEW [LOS_REZAGADOS].[v_porcentaje_descuento_aplicados_por_medio_pago] AS
+SELECT
+    DP.tipo_descripcion AS Medio_de_Pago,
+    DT.cuatrimestre,
+    SUM(HP.importe) AS Total_Pagos_Sin_Descuento,
+    SUM(HP.importe - HP.importe * (1 - HP.detalle_cuotas / 100)) AS Total_Descuentos_Aplicados,
+    SUM(HP.importe - HP.importe * (1 - HP.detalle_cuotas / 100)) / SUM(HP.importe) * 100 AS Porcentaje_Descuento_Aplicado
+FROM [LOS_REZAGADOS].BI_hechos_pagos HP
+JOIN 
+	[LOS_REZAGADOS].BI_dimension_tiempos DT ON HP.tiempo_id = DT.tiempo_id
+JOIN 
+	[LOS_REZAGADOS].BI_dimension_medios_de_pago DP ON HP.medios_de_pago_id = DP.medios_de_pago_id
+GROUP BY DP.tipo_descripcion, DT.cuatrimestre;
