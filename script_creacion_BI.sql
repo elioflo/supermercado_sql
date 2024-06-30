@@ -56,6 +56,10 @@ IF OBJECT_ID('LOS_REZAGADOS.v_promedio_cuota_x_edad') IS NOT NULL
   DROP VIEW [LOS_REZAGADOS].v_promedio_cuota_x_edad;
 IF OBJECT_ID('LOS_REZAGADOS.v_cant_envios_x_edad') IS NOT NULL
   DROP VIEW [LOS_REZAGADOS].v_cant_envios_x_edad;
+IF OBJECT_ID('LOS_REZAGADOS.v_porcentaje_descuento_aplicados_por_medio_pago') IS NOT NULL
+  DROP VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados_por_medio_pago;
+IF OBJECT_ID('LOS_REZAGADOS.v_top5_localidades_costo_envio') IS NOT NULL
+  DROP VIEW [LOS_REZAGADOS].v_top5_localidades_costo_envio;
 
 -- Borrado de tablas si existen en caso que el schema exista
 
