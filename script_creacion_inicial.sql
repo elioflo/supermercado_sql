@@ -946,8 +946,8 @@ GO
 INSERT INTO [LOS_REZAGADOS].[Subcategorias_x_producto]
 ([subcategoria_id], [producto_id])
 SELECT DISTINCT
-  p.producto_id,
-  s.subcategoria_id
+  s.subcategoria_id,
+  p.producto_id
 FROM gd_esquema.Maestra dato
 INNER JOIN [LOS_REZAGADOS].Marcas m
   ON m.marca_descripcion = dato.PRODUCTO_MARCA
