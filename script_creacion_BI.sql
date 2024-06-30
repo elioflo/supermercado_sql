@@ -34,11 +34,16 @@ DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetCuatrimestre;
 DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetTiempoId;
 DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetCategoriaId;
 DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetUbicacionId;
+DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_EnvioCumplido;
 
 -- Borrado de vistas si existen en caso que el schema exista
 
 IF OBJECT_ID('LOS_REZAGADOS.v_porcentaje_descuento_aplicados') IS NOT NULL
   DROP VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados
+IF OBJECT_ID('LOS_REZAGADOS.v_tres_categorias_mayor_descuento') IS NOT NULL
+  DROP VIEW [LOS_REZAGADOS].v_tres_categorias_mayor_descuento
+IF OBJECT_ID('LOS_REZAGADOS.v_porcentaje_cumplimiento_envio') IS NOT NULL
+  DROP VIEW [LOS_REZAGADOS].v_porcentaje_cumplimiento_envio
 
 -- Borrado de tablas si existen en caso que el schema exista
 
@@ -320,6 +325,17 @@ BEGIN
 END
 GO
 
+CREATE FUNCTION [LOS_REZAGADOS].fn_EnvioCumplido(@fechaEntregado DATETIME, @fechaProgramado DATETIME) RETURNS INT AS
+BEGIN
+  DECLARE @Cumplido INT;
+  IF TRY_CAST(@fechaEntregado AS DATE) <= TRY_CAST(@fechaEntregado AS DATE)
+	SET @Cumplido = 1
+  ELSE
+    SET @Cumplido = 0
+  RETURN @Cumplido
+END;
+GO
+
 -- ================= Carga datos =============================
 
 BEGIN TRANSACTION
@@ -558,6 +574,55 @@ GO
 -- INSERT INTO [LOS_REZAGADOS].[BI_hechos_envios]
 
 -- ================= Vistas =============================
+
+-- Punto 5
+
+CREATE VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados AS
+SELECT 
+  t.anio AS Anio,
+  t.mes AS Mes,
+  SUM(hv.descuentos) AS TotalDescuentos,
+  SUM(hv.ticket_sub_total) AS TotalTickets,
+  TRY_CAST((SUM(hv.descuentos) / SUM(hv.ticket_sub_total)) * 100 AS DECIMAL(18,2)) AS PorcentajeDescuento
+FROM [LOS_REZAGADOS].BI_hechos_ventas hv
+INNER JOIN [LOS_REZAGADOS].BI_dimension_tiempos t on t.tiempo_id = hv.tiempo_id
+GROUP BY t.anio, t.mes;
+GO
+
+
+-- Punto 6
+
+CREATE VIEW [LOS_REZAGADOS].v_tres_categorias_mayor_descuento AS
+SELECT * FROM ( 
+  SELECT
+    t.anio,
+    t.cuatrimestre,
+    dc.categoria_descripcion,
+    SUM(promo_aplicada_descuento) AS TotalDescuento,
+    ROW_NUMBER() OVER (PARTITION BY t.anio, t.cuatrimestre ORDER BY SUM(promo_aplicada_descuento) DESC) AS rnk
+  FROM [LOS_REZAGADOS].BI_hechos_productos hp
+  INNER JOIN [LOS_REZAGADOS].BI_dimension_tiempos t ON t.tiempo_id = hp.tiempo_id
+  INNER JOIN [LOS_REZAGADOS].BI_dimension_categorias dc ON dc.categoria_id = hp.categoria_id
+  GROUP BY t.anio, t.cuatrimestre, dc.categoria_descripcion) RankingDescuentoPorCategoria
+WHERE RankingDescuentoPorCategoria.rnk <= 3
+GO
+
+-- Punto 7
+
+CREATE VIEW [LOS_REZAGADOS].v_porcentaje_cumplimiento_envio AS
+SELECT 
+  t.anio AS Anio,
+  t.mes AS Mes,
+  s.sucursal_nombre,
+  s.supermercado,
+  COUNT(1) AS TotalEnvios,
+  SUM([LOS_REZAGADOS].fn_EnvioCumplido(he.envio_fecha_entrega,he.envio_fecha_programada)) AS EnviosCumplidos,
+  (SUM([LOS_REZAGADOS].fn_EnvioCumplido(he.envio_fecha_entrega,he.envio_fecha_programada)) / COUNT(1)) * 100 AS PorcentajeCumplimientoEnvio
+FROM [LOS_REZAGADOS].BI_hechos_envios he
+INNER JOIN [LOS_REZAGADOS].BI_dimension_tiempos t on t.tiempo_id = he.tiempo_id
+INNER JOIN [LOS_REZAGADOS].BI_dimension_sucursales s on s.sucursal_id = he.sucursal_id
+GROUP BY t.anio, t.mes, s.sucursal_nombre, s.supermercado;
+GO
 
 -- --Punto 1
 -- CREATE VIEW vista_promedio_ventas AS
