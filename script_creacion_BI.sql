@@ -434,7 +434,7 @@ FROM [LOS_REZAGADOS].Tickets_Venta TV
 LEFT JOIN [LOS_REZAGADOS].Cajas C ON TV.caja = C.caja_id
 LEFT JOIN [LOS_REZAGADOS].Envios E ON TV.ticket_id = E.ticket_id
 LEFT JOIN [LOS_REZAGADOS].Clientes Cl ON E.cliente = Cl.cliente_id
-LEFT JOIN [LOS_REZAGADOS].Pagos_Ventas PV ON TV.ticket_numero = PV.ticket_id
+LEFT JOIN [LOS_REZAGADOS].Pagos_Ventas PV ON TV.ticket_id = PV.ticket_id
 LEFT JOIN [LOS_REZAGADOS].Medios_de_pago MP ON PV.medio_de_pago = MP.medio_de_pago_id
 LEFT JOIN [LOS_REZAGADOS].Detalles_pagos DP ON PV.detalle = DP.detalle_id
 GO
@@ -475,7 +475,7 @@ SELECT
   [LOS_REZAGADOS].fn_GetTiempoId(TV.ticket_fecha_hora),
   [LOS_REZAGADOS].fn_GetRangoEdadId(E.empleado_fecha_nacimiento),
   [LOS_REZAGADOS].fn_GetTurnoId(TV.ticket_fecha_hora),
-  TV.ticket_numero,
+  TV.ticket_id,
   C.caja_tipo,
   TV.ticket_sub_total_productos,
   Pd.producto_id,
@@ -679,10 +679,11 @@ CREATE VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados_por_medio_pago AS
 SELECT
     DP.tipo_descripcion AS Medio_de_Pago,
     DT.cuatrimestre,
-    SUM(HP.importe) AS Total_Pagos_Sin_Descuento,
-    SUM(HP.importe - HP.importe * (1 - HP.detalle_cuotas / 100)) AS Total_Descuentos_Aplicados,
-    SUM(HP.importe - HP.importe * (1 - HP.detalle_cuotas / 100)) / SUM(HP.importe) * 100 AS Porcentaje_Descuento_Aplicado
+    SUM(HV.ticket_sub_total) AS Total_Pagos_Sin_Descuento,
+    SUM(HP.importe) AS Total_Descuentos_Aplicados,
+    (SUM(HP.importe)/SUM(hv.ticket_sub_total))* 100 AS Porcentaje_Descuento_Aplicado
 FROM [LOS_REZAGADOS].BI_hechos_pagos HP
+JOIN [LOS_REZAGADOS].BI_hechos_ventas HV ON HP.ticket_id = HV.ticket_nro
 JOIN [LOS_REZAGADOS].BI_dimension_tiempos DT ON HP.tiempo_id = DT.tiempo_id
 JOIN [LOS_REZAGADOS].BI_dimension_medios_de_pago DP ON HP.medios_de_pago_id = DP.medios_de_pago_id
 GROUP BY DP.tipo_descripcion, DT.cuatrimestre;
