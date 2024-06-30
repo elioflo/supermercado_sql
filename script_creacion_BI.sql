@@ -38,8 +38,13 @@ DROP FUNCTION IF EXISTS [LOS_REZAGADOS].fn_GetUbicacionId;
 -- Borrado de vistas si existen en caso que el schema exista
 
 IF OBJECT_ID('LOS_REZAGADOS.v_porcentaje_descuento_aplicados') IS NOT NULL
-  DROP VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados
-
+  DROP VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados;
+IF OBJECT_ID('LOS_REZAGADOS.v_promedio_ventas') IS NOT NULL
+DROP VIEW [LOS_REZAGADOS].v_promedio_ventas;
+IF OBJECT_ID('LOS_REZAGADOS.v_promedio_cuota_x_edad') IS NOT NULL
+DROP VIEW [LOS_REZAGADOS].v_promedio_cuota_x_edad;
+IF OBJECT_ID('LOS_REZAGADOS.v_cant_envios_x_edad') IS NOT NULL
+DROP VIEW [LOS_REZAGADOS].v_cant_envios_x_edad;
 -- Borrado de tablas si existen en caso que el schema exista
 
 IF OBJECT_ID('LOS_REZAGADOS.BI_hechos_pagos','U') IS NOT NULL
@@ -558,19 +563,21 @@ GO
 -- INSERT INTO [LOS_REZAGADOS].[BI_hechos_envios]
 
 -- ================= Vistas =============================
+ ----Punto 1
+ CREATE VIEW [LOS_REZAGADOS].v_promedio_ventas AS
+ SELECT 
+     localidad_descripcion, 
+     anio, 
+     mes, 
+     AVG(ticket_sub_total) AS Ticket_Promedio_Mensual
+ FROM [LOS_REZAGADOS].BI_hechos_ventas
+ JOIN [LOS_REZAGADOS].BI_dimension_ubicaciones ON BI_hechos_ventas.ubicacion_id = BI_dimension_ubicaciones.ubicacion_id
+ JOIN [LOS_REZAGADOS].BI_dimension_tiempos ON BI_hechos_ventas.tiempo_id = BI_dimension_tiempos.tiempo_id
+ GROUP BY localidad_descripcion, anio, mes;
 
--- --Punto 1
--- CREATE VIEW vista_promedio_ventas AS
--- SELECT 
---     localidad_descripcion, 
---     anio, 
---     mes, 
---     AVG(importe_venta) AS promedio_venta
--- FROM [LOS_REZAGADOS].BI_hechos_ventas
--- JOIN BI_dimension_ubicaciones ON BI_hechos_ventas.ubicacion_id = BI_dimension_ubicaciones.ubicacion_id
--- JOIN BI_dimension_tiempos ON BI_hechos_ventas.tiempo_id = BI_dimension_tiempos.tiempo_id
--- GROUP BY localidad_descripcion, anio, mes;
--- GO
+ -- para ver que solo tiene esa localidad
+--select * from gd_esquema.Maestra where SUCURSAL_LOCALIDAD is not null
+ GO
 
 -- Punto 5
 
@@ -587,17 +594,18 @@ GO
 -- GO
 
 -- --Punto 8
--- CREATE VIEW cant_envios_x_edad AS
--- SELECT 
---     anio, 
---     cuatrimestre, 
---     rango_descripcion, 
---     COUNT(nro_envio) AS cantidad_env�os
--- FROM LOS_REZAGADOS.hechos_env�os
--- JOIN BI_dimension_rangos_edades ON hechos_env�os.rango_id = BI_dimension_rangos_edades.id_rango_etario
--- JOIN BI_dimension_tiempos ON hechos_env�os.tiempo_id = BI_dimension_tiempos.tiempo_id
--- GROUP BY anio, cuatrimestre, rango_descripcion;
--- GO
+ CREATE VIEW [LOS_REZAGADOS].v_cant_envios_x_edad AS
+ SELECT 
+     anio, 
+     cuatrimestre, 
+     rango_descripcion, 
+     COUNT(envio) AS cantidad_envios
+ FROM [LOS_REZAGADOS].BI_hechos_envios
+ JOIN [LOS_REZAGADOS].BI_dimension_rangos_edades ON BI_hechos_envios.rango_cliente = BI_dimension_rangos_edades.rango_id
+ JOIN [LOS_REZAGADOS].BI_dimension_tiempos ON BI_hechos_envios.tiempo_id = BI_dimension_tiempos.tiempo_id
+ GROUP BY anio, cuatrimestre, rango_descripcion;
+ GO
+
 
 -- --Punto 9
 
@@ -614,12 +622,11 @@ GO
 -- GO
 
 -- --Punto 11
--- CREATE VIEW promedio_cuota_x_edad AS
--- SELECT 
---     rango_descripcion, 
---     AVG(importe_pago / n�mero_cuotas) AS promedio_importe_cuota
--- FROM LOS_REZAGADOS.hechos_pagos
--- JOIN BI_hechos_ventas ON hechos_pagos.id_venta = BI_hechos_ventas.id_venta
--- JOIN BI_dimension_rangos_edades ON BI_hechos_ventas.rango_cliente = BI_dimension_rangos_edades.id_rango_etario
--- GROUP BY rango_descripcion;
--- GO
+ CREATE VIEW [LOS_REZAGADOS].v_promedio_cuota_x_edad AS
+ SELECT 
+     rango_descripcion, 
+	COALESCE(CONVERT(VARCHAR(255), AVG(importe / detalle_cuotas)), 'No hay cuotas registradas') AS promedio_importe_cuota
+ FROM [LOS_REZAGADOS].BI_hechos_pagos
+ JOIN [LOS_REZAGADOS].BI_dimension_rangos_edades ON BI_hechos_pagos.rango_cliente = BI_dimension_rangos_edades.rango_id
+ GROUP BY rango_descripcion;
+ GO
