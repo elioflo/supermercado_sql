@@ -907,7 +907,6 @@ LEFT JOIN [LOS_REZAGADOS].Detalles_pagos dp
   ON dp.detalle_nro_tarjeta = dato.PAGO_TARJETA_NRO
   AND dp.detalle_cuotas = dato.PAGO_TARJETA_CUOTAS
   AND dp.detalle_vencimiento = dato.PAGO_TARJETA_FECHA_VENC
-  AND dp.cliente = c.cliente_id
 LEFT JOIN [LOS_REZAGADOS].Tipos_comprobantes tc
   ON tc.tipos_comprobantes_descripcion = dato.TICKET_TIPO_COMPROBANTE
 LEFT JOIN [LOS_REZAGADOS].Tickets_Venta tv
@@ -946,8 +945,8 @@ GO
 INSERT INTO [LOS_REZAGADOS].[Subcategorias_x_producto]
 ([producto_id],[subcategoria_id])
 SELECT DISTINCT
-  s.subcategoria_id,
-  p.producto_id
+  p.producto_id,
+  s.subcategoria_id
 FROM gd_esquema.Maestra dato
 INNER JOIN [LOS_REZAGADOS].Marcas m
   ON m.marca_descripcion = dato.PRODUCTO_MARCA

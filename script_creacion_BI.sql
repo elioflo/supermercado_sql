@@ -56,6 +56,12 @@ IF OBJECT_ID('LOS_REZAGADOS.v_promedio_cuota_x_edad') IS NOT NULL
   DROP VIEW [LOS_REZAGADOS].v_promedio_cuota_x_edad;
 IF OBJECT_ID('LOS_REZAGADOS.v_cant_envios_x_edad') IS NOT NULL
   DROP VIEW [LOS_REZAGADOS].v_cant_envios_x_edad;
+IF OBJECT_ID('LOS_REZAGADOS.v_top5_localidades_costo_envio') IS NOT NULL
+  DROP VIEW [LOS_REZAGADOS].v_top5_localidades_costo_envio;
+IF OBJECT_ID('LOS_REZAGADOS.v_top3_sucursales_mayor_importe_pago_en_cuotas') IS NOT NULL
+  DROP VIEW [LOS_REZAGADOS].v_top3_sucursales_mayor_importe_pago_en_cuotas;
+IF OBJECT_ID('LOS_REZAGADOS.v_porcentaje_descuento_aplicados_por_medio_pago') IS NOT NULL
+  DROP VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados_por_medio_pago;
 
 -- Borrado de tablas si existen en caso que el schema exista
 
@@ -434,7 +440,7 @@ FROM [LOS_REZAGADOS].Tickets_Venta TV
 LEFT JOIN [LOS_REZAGADOS].Cajas C ON TV.caja = C.caja_id
 LEFT JOIN [LOS_REZAGADOS].Envios E ON TV.ticket_id = E.ticket_id
 LEFT JOIN [LOS_REZAGADOS].Clientes Cl ON E.cliente = Cl.cliente_id
-LEFT JOIN [LOS_REZAGADOS].Pagos_Ventas PV ON TV.ticket_numero = PV.ticket_id
+LEFT JOIN [LOS_REZAGADOS].Pagos_Ventas PV ON TV.ticket_id = PV.ticket_id
 LEFT JOIN [LOS_REZAGADOS].Medios_de_pago MP ON PV.medio_de_pago = MP.medio_de_pago_id
 LEFT JOIN [LOS_REZAGADOS].Detalles_pagos DP ON PV.detalle = DP.detalle_id
 GO
@@ -527,7 +533,7 @@ GO
 
 -- ================= Vistas =============================
 
--- --Punto 1
+-- Punto 1
 CREATE VIEW [LOS_REZAGADOS].v_promedio_ventas AS
 SELECT
     localidad_descripcion,
@@ -607,7 +613,7 @@ GO
 -- Punto 6
 
 CREATE VIEW [LOS_REZAGADOS].v_tres_categorias_mayor_descuento AS
-SELECT * FROM ( 
+SELECT * FROM (
   SELECT
     t.anio,
     t.cuatrimestre,
@@ -638,7 +644,7 @@ INNER JOIN [LOS_REZAGADOS].BI_dimension_sucursales s on s.sucursal_id = he.sucur
 GROUP BY t.anio, t.mes, s.sucursal_nombre, s.supermercado;
 GO
 
--- --Punto 8
+-- Punto 8
 
 CREATE VIEW [LOS_REZAGADOS].v_cant_envios_x_edad AS
 SELECT
@@ -652,7 +658,7 @@ JOIN [LOS_REZAGADOS].BI_dimension_tiempos ON BI_hechos_envios.tiempo_id = BI_dim
 GROUP BY anio, cuatrimestre, rango_descripcion;
 GO
 
--- --Punto 9
+-- Punto 9
 
 CREATE VIEW [LOS_REZAGADOS].v_top5_localidades_costo_envio AS
 SELECT TOP 5
@@ -663,7 +669,21 @@ JOIN [LOS_REZAGADOS].BI_dimension_ubicaciones DU ON HE.ubicacion_id = DU.ubicaci
 GROUP BY DU.localidad_descripcion
 GO
 
--- --Punto 11
+-- Punto 10
+
+CREATE VIEW [LOS_REZAGADOS].v_top3_sucursales_mayor_importe_pago_en_cuotas AS
+SELECT DISTINCT TOP 3
+    S.sucursal_nombre,
+    MP.descripcion,
+    SUM(P.importe) AS importe
+FROM [LOS_REZAGADOS].BI_hechos_pagos P
+JOIN [LOS_REZAGADOS].BI_dimension_sucursales S ON P.sucursal_id = S.sucursal_id
+JOIN [LOS_REZAGADOS].BI_dimension_medios_de_pago MP ON P.medios_de_pago_id = MP.medios_de_pago_id
+GROUP BY S.sucursal_nombre, MP.descripcion
+HAVING MP.descripcion <> 'Efectivo'
+GO
+
+-- Punto 11
 
 CREATE VIEW [LOS_REZAGADOS].v_promedio_cuota_x_edad AS
 SELECT rango_descripcion,
@@ -673,7 +693,7 @@ JOIN [LOS_REZAGADOS].BI_dimension_rangos_edades ON BI_hechos_pagos.rango_cliente
 GROUP BY rango_descripcion;
 GO
 
---Punto 12
+-- Punto 12
 
 CREATE VIEW [LOS_REZAGADOS].v_porcentaje_descuento_aplicados_por_medio_pago AS
 SELECT
