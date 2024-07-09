@@ -856,15 +856,16 @@ FROM gd_esquema.Maestra dato
 INNER JOIN [LOS_REZAGADOS].Tickets_Venta tv
   ON dato.TICKET_NUMERO = tv.ticket_numero
   AND [LOS_REZAGADOS].fn_GetTipoComprobanteId(dato.TICKET_TIPO_COMPROBANTE) = tv.tipo_comprobante
-
-INNER JOIN [LOS_REZAGADOS].Marcas m
-  ON m.marca_descripcion = dato.PRODUCTO_MARCA
-
+  AND tv.ticket_fecha_hora = dato.TICKET_FECHA_HORA
+  AND tv.ticket_total_ticket = dato.TICKET_TOTAL_TICKET
+  AND tv.ticket_sub_total_productos = dato.TICKET_SUBTOTAL_PRODUCTOS
 INNER JOIN [LOS_REZAGADOS].Productos p
   ON p.producto_descripcion = dato.PRODUCTO_DESCRIPCION
   AND p.producto_nombre = dato.PRODUCTO_NOMBRE
   AND p.producto_precio_unitario = dato.PRODUCTO_PRECIO
-  AND p.producto_marca = m.marca_id
+INNER JOIN [LOS_REZAGADOS].Marcas m
+  ON m.marca_id = p.producto_marca
+  AND m.marca_descripcion = dato.PRODUCTO_MARCA
 GO
 
 INSERT INTO [LOS_REZAGADOS].[Envios]
@@ -929,17 +930,37 @@ GO
 INSERT INTO [LOS_REZAGADOS].[Promociones_x_venta]
   ([cod_promocion], [ticket_venta_producto])
 SELECT DISTINCT
-  p.cod_promocion,
+  dato.PROMO_CODIGO,
   tvp.ticket_venta_producto
 FROM gd_esquema.Maestra dato
-INNER JOIN [LOS_REZAGADOS].Promociones p
-  ON p.promocion_descripcion = dato.PROMOCION_DESCRIPCION
-  AND p.promocion_fecha_inicio = dato.PROMOCION_FECHA_INICIO
-  AND p.promocion_fecha_fin = dato.PROMOCION_FECHA_FIN
 INNER JOIN [LOS_REZAGADOS].Ticket_venta_x_producto tvp
   ON tvp.promo_aplicada_descuento = dato.PROMO_APLICADA_DESCUENTO
   AND tvp.ticket_det_total = dato.TICKET_DET_TOTAL
   AND tvp.ticket_det_precio = dato.TICKET_DET_PRECIO
+  AND tvp.ticket_det_cantidad = dato.TICKET_DET_CANTIDAD
+INNER JOIN [LOS_REZAGADOS].Productos p
+  ON p.producto_id = tvp.producto
+  AND p.producto_descripcion = dato.PRODUCTO_DESCRIPCION
+  AND p.producto_nombre = dato.PRODUCTO_NOMBRE
+  AND p.producto_precio_unitario = dato.PRODUCTO_PRECIO
+INNER JOIN [LOS_REZAGADOS].Marcas m
+  ON m.marca_id = p.producto_marca
+  AND m.marca_descripcion = dato.PRODUCTO_MARCA
+INNER JOIN LOS_REZAGADOS.Tickets_Venta tv
+  ON tv.ticket_id = tvp.ticket_id
+  AND tv.ticket_numero = dato.TICKET_NUMERO
+  AND tv.ticket_fecha_hora = dato.TICKET_FECHA_HORA
+  AND tv.ticket_total_ticket = dato.TICKET_TOTAL_TICKET
+  AND tv.ticket_sub_total_productos = dato.TICKET_SUBTOTAL_PRODUCTOS
+  AND tv.ticket_total_descuento_aplicado = dato.TICKET_TOTAL_DESCUENTO_APLICADO_MP
+  AND tv.ticket_total_descuento = dato.TICKET_TOTAL_DESCUENTO_APLICADO
+INNER JOIN LOS_REZAGADOS.Empleados e
+  ON e.empleado_id = tv.empleado
+  AND e.empleado_dni = dato.EMPLEADO_DNI
+  AND e.empleado_nombre = dato.EMPLEADO_NOMBRE
+INNER JOIN LOS_REZAGADOS.Cajas c
+  ON c.caja_id = tv.caja
+  AND c.caja_numero = dato.CAJA_NUMERO
 GO
 
 INSERT INTO [LOS_REZAGADOS].[Subcategorias_x_producto]
