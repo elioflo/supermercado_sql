@@ -387,7 +387,6 @@ CREATE TABLE [LOS_REZAGADOS].[Promociones_x_venta]
 (
   cod_promocion DECIMAL(18, 0),
   ticket_venta_producto DECIMAL (18, 0),
-  producto DECIMAL (18,0),
   PRIMARY KEY(cod_promocion, ticket_venta_producto),
   FOREIGN KEY(ticket_venta_producto) REFERENCES [LOS_REZAGADOS].[Ticket_venta_x_producto],
   FOREIGN KEY(cod_promocion) REFERENCES [LOS_REZAGADOS].[Promociones],
