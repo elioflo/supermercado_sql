@@ -488,9 +488,12 @@ INSERT INTO [LOS_REZAGADOS].[BI_hechos_ventas](
   ticket_total_descuento_promociones,
   ticket_total_descuento_medio_pago
 )
+-- 430 4:48
 SELECT
   [LOS_REZAGADOS].fn_GetUbicacionId(L.localidad_descripcion, P.provincia_descripcion),
-  [LOS_REZAGADOS].fn_GetTiempoId(TV.ticket_fecha_hora),
+  YEAR(TV.ticket_fecha_hora),
+  [LOS_REZAGADOS].fn_GetCuatrimestre(TV.ticket_fecha_hora),
+  MONTH(TV.ticket_fecha_hora),
   [LOS_REZAGADOS].fn_GetRangoEdadId(E.empleado_fecha_nacimiento),
   [LOS_REZAGADOS].fn_GetTurnoId(TV.ticket_fecha_hora),
   COUNT(TV.ticket_id),
@@ -509,7 +512,9 @@ JOIN [LOS_REZAGADOS].Empleados E ON TV.empleado = E.empleado_id
 JOIN [LOS_REZAGADOS].Ticket_venta_x_producto TVP ON TV.ticket_id = TVP.ticket_id
 JOIN [LOS_REZAGADOS].Productos Pd ON TVP.producto = Pd.producto_id
 GROUP BY [LOS_REZAGADOS].fn_GetUbicacionId(L.localidad_descripcion, P.provincia_descripcion),
-  [LOS_REZAGADOS].fn_GetTiempoId(TV.ticket_fecha_hora),
+  YEAR(TV.ticket_fecha_hora),
+  [LOS_REZAGADOS].fn_GetCuatrimestre(TV.ticket_fecha_hora),
+  MONTH(TV.ticket_fecha_hora),
   [LOS_REZAGADOS].fn_GetRangoEdadId(E.empleado_fecha_nacimiento),
   [LOS_REZAGADOS].fn_GetTurnoId(TV.ticket_fecha_hora),
   C.caja_tipo
@@ -557,17 +562,17 @@ GO
 
 -- ================= Vistas =============================
 
--- -- Punto 1
--- CREATE VIEW [LOS_REZAGADOS].v_promedio_ventas AS
--- SELECT localidad_descripcion, anio, mes, AVG(ticket_sub_total) AS TotalMensual, SUM(ticket_sub_total) AS Total, SUM(ticket_nro) AS TotalVentas, COUNT(*) AS Cantidad
--- from [LOS_REZAGADOS].BI_hechos_ventas ventas
--- JOIN [LOS_REZAGADOS].BI_dimension_tiempos t
--- 	ON ventas.tiempo_id = t.tiempo_id
--- JOIN [LOS_REZAGADOS].BI_dimension_ubicaciones u
--- 	ON ventas.ubicacion_id = u.ubicacion_id
--- GROUP BY
--- 	localidad_descripcion, anio, mes
--- GO
+-- Punto 1
+CREATE VIEW [LOS_REZAGADOS].v_promedio_ventas AS
+SELECT anio, mes, localidad_descripcion, AVG(ticket_sub_total) AS TotalMensual, SUM(ticket_sub_total) AS Total, SUM(ticket_nro) AS TotalVentas, COUNT(*) AS Cantidad
+FROM [LOS_REZAGADOS].BI_hechos_ventas ventas
+JOIN [LOS_REZAGADOS].BI_dimension_tiempos t
+	ON ventas.tiempo_id = t.tiempo_id
+JOIN [LOS_REZAGADOS].BI_dimension_ubicaciones u
+	ON ventas.ubicacion_id = u.ubicacion_id
+GROUP BY
+	localidad_descripcion, anio, mes
+GO
 
 -- -- Punto 2
 -- CREATE VIEW [LOS_REZAGADOS].v_cantidad_unidades_promedio AS
@@ -628,7 +633,7 @@ GO
 --   SUM(hv.ticket_sub_total) AS TotalTickets,
 --   TRY_CAST((SUM(hv.ticket_total_descuento_promociones + hv.ticket_total_descuento_medio_pago) / SUM(hv.ticket_sub_total)) * 100 AS DECIMAL(18,2)) AS PorcentajeDescuento
 -- FROM [LOS_REZAGADOS].BI_hechos_ventas hv
--- INNER JOIN [LOS_REZAGADOS].BI_dimension_tiempos t on t.tiempo_id = hv.tiempo_id
+-- INNER JOIN [LOS_REZAGADOS].BI_dimension_tiempos t ON t.tiempo_id = hv.tiempo_id
 -- GROUP BY t.anio, t.mes;
 -- GO
 
@@ -663,7 +668,7 @@ GO
 --   (SUM([LOS_REZAGADOS].fn_EnvioCumplido(he.envio_fecha_entrega,he.envio_fecha_programada)) / COUNT(1)) * 100 AS PorcentajeCumplimientoEnvio
 -- FROM [LOS_REZAGADOS].BI_hechos_envios he
 -- INNER JOIN [LOS_REZAGADOS].BI_dimension_tiempos t ON t.tiempo_id = he.tiempo_id
--- INNER JOIN [LOS_REZAGADOS].BI_dimension_sucursales s on s.sucursal_id = he.sucursal_id
+-- INNER JOIN [LOS_REZAGADOS].BI_dimension_sucursales s ON s.sucursal_id = he.sucursal_id
 -- GROUP BY t.anio, t.mes, s.sucursal_nombre, s.supermercado;
 -- GO
 
