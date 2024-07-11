@@ -746,3 +746,54 @@ GO
 -- JOIN [LOS_REZAGADOS].BI_dimension_medios_de_pago DP ON HP.medios_de_pago_id = DP.medios_de_pago_id
 -- GROUP BY DP.tipo_descripcion, DT.cuatrimestre;
 -- GO
+
+
+--WITH Ubicaciones AS (
+--    SELECT 
+--        L.localidad_id,
+--        P.provincia_id,
+--        [LOS_REZAGADOS].fn_GetUbicacionId(L.localidad_descripcion, P.provincia_descripcion) AS ubicacion_id
+--    FROM [LOS_REZAGADOS].Localidades L
+--    JOIN [LOS_REZAGADOS].Provincias P ON L.provincia = P.provincia_id
+--),
+--Tiempos AS (
+--    SELECT 
+--        TV.ticket_id,
+--        [LOS_REZAGADOS].fn_GetTiempoId(TV.ticket_fecha_hora) AS tiempo_id,
+--        [LOS_REZAGADOS].fn_GetTurnoId(TV.ticket_fecha_hora) AS turno_id
+--    FROM [LOS_REZAGADOS].Tickets_Venta TV
+--),
+--RangosEdad AS (
+--    SELECT 
+--        E.empleado_id,
+--        [LOS_REZAGADOS].fn_GetRangoEdadId(E.empleado_fecha_nacimiento) AS rango_edad_id
+--    FROM [LOS_REZAGADOS].Empleados E
+--)
+
+--SELECT
+--    U.ubicacion_id,
+--    T.tiempo_id,
+--    R.rango_edad_id,
+--    T.turno_id,
+--    COUNT(TV.ticket_id),
+--    C.caja_tipo,
+--    SUM(TV.ticket_sub_total_productos),
+--    COUNT(Pd.producto_id),
+--    SUM(TVP.ticket_det_cantidad),
+--    SUM(TV.ticket_total_descuento),
+--    SUM(TV.ticket_total_descuento_aplicado)
+--FROM [LOS_REZAGADOS].Tickets_Venta TV
+--JOIN [LOS_REZAGADOS].Cajas C ON TV.caja = C.caja_id
+--JOIN [LOS_REZAGADOS].Sucursales S ON C.sucursal = S.sucursal_id
+--JOIN Ubicaciones U ON S.sucursal_localidad = U.localidad_id
+--JOIN Tiempos T ON TV.ticket_id = T.ticket_id
+--JOIN [LOS_REZAGADOS].Empleados E ON TV.empleado = E.empleado_id
+--JOIN RangosEdad R ON E.empleado_id = R.empleado_id
+--JOIN [LOS_REZAGADOS].Ticket_venta_x_producto TVP ON TV.ticket_id = TVP.ticket_id
+--JOIN [LOS_REZAGADOS].Productos Pd ON TVP.producto = Pd.producto_id
+--GROUP BY 
+--    U.ubicacion_id,
+--    T.tiempo_id,
+--    R.rango_edad_id,
+--    T.turno_id,
+--    C.caja_tipo;
